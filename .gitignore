@@ -1,0 +1,69 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Spark, Hadoop & Database logs
+metastore_db/
+derby.log
+spark-warehouse/
+*.parquet.crc
+*.csv.crc
+*.json.crc
+.*.crc
+.crc/
+
+# Large Archives & Download Caches
+*.tar.gz
+*.zip
+*.zst
+data/raw/*.gz
+TaobaoAd_Manageable_Dataset_Kit/dataset/*.gz
+
+# IDE and OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary scripts
+test_runner.js
+temp_script_check.js

@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+.sparkStaging/
+data/processed/
+models/*/
+logs/*

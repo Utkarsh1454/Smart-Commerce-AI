@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Commerce AI — Distributed Product Recommendation & Ad Auction</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">
+    globalThis.tailwind = globalThis.tailwind || {};
+    globalThis.tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F46E5',
+            'primary-hover': '#4338CA',
+            secondary: '#0284C7',
+            accent: '#D97706',
+            success: '#059669',
+            error: '#DC2626',
+            light: {
+              bg: '#F8FAFC',
+              card: '#FFFFFF',
+              border: '#E2E8F0',
+              text: '#0F172A',
+              muted: '#64748B'
+            },
+            dark: {
+              bg: '#0B0F19',
+              card: '#111827',
+              border: '#1F2937',
+              text: '#F9FAFB',
+              muted: '#9CA3AF'
+            }
+          },
+          fontFamily: {
+            display: ['"Space Grotesk"', 'sans-serif'],
+            headline: ['"Space Grotesk"', 'sans-serif'],
+            body: ['"Inter"', 'sans-serif'],
+            code: ['"Space Mono"', 'monospace'],
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet">
+  
+  <style>
+    .material-symbols-outlined {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      line-height: 1 !important;
+      overflow: hidden;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4F46E5; }
+    .glass {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .dark .glass {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.15; transform: scale(1); }
+      50% { opacity: 0.28; transform: scale(1.04); }
+    }
+    .glow-aura { animation: pulseGlow 8s ease-in-out infinite; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-body antialiased transition-colors duration-200">
+
+  <!-- Ambient Glow Accents (Subtle Light Pastel Glow) -->
+  <div class="fixed top-0 left-1/4 w-[500px] h-[500px] bg-indigo-300/20 rounded-full blur-3xl pointer-events-none glow-aura -z-10"></div>
+  <div class="fixed top-1/3 right-10 w-[400px] h-[400px] bg-sky-200/20 rounded-full blur-3xl pointer-events-none glow-aura -z-10"></div>
+  <div class="fixed bottom-10 left-1/3 w-[500px] h-[500px] bg-amber-200/20 rounded-full blur-3xl pointer-events-none -z-10"></div>
+
+  <!-- App Wrapper -->
+  <div class="min-h-screen flex flex-col">
+
+    <!-- ========================================================================= -->
+    <!-- 1. TOP GLOBAL NAVIGATION HEADER                                           -->
+    <!-- ========================================================================= -->
+    <header class="sticky top-0 z-40 glass border-b border-slate-200 shadow-xs transition-colors">
+      <div class="max-w-7xl mx-auto px-4 lg:px-8 py-3 flex items-center justify-between gap-4">
+        
+        <!-- Logo & Cluster Status Badge -->
+        <div class="flex items-center gap-3 shrink-0">
+          <button onclick="setViewMode('store')" class="flex items-center gap-2 group text-left">
+            <span class="text-2xl" role="img" aria-label="shopping cart">🛍️</span>
+            <div>
+              <div class="font-headline font-bold text-lg tracking-tight text-slate-900 group-hover:text-primary transition-colors">
+                Smart Commerce <span class="text-primary font-bold">AI</span>
+              </div>
+              <div class="text-[10px] text-slate-500 font-code tracking-wide">INT315 CLUSTER EDITION</div>
+            </div>
+          </button>
+          
+          <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 font-code text-xs">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+            </span>
+            <span>20 Cores • Spark 3.5.1</span>
+          </div>
+        </div>
+
+        <!-- Search Bar with Category Selector -->
+        <div class="flex-1 max-w-lg mx-2 hidden md:block">
+          <div class="relative flex items-center">
+            <select id="searchCategory" onchange="handleCategorySelect(this.value)" class="absolute left-1 z-10 bg-slate-100 border-none text-slate-700 font-mono text-xs rounded-l py-1.5 pl-2.5 pr-6 focus:ring-0 cursor-pointer">
+              <option value="all">All Clusters</option>
+              <option value="electronics" selected>Electronics (cate_4231)</option>
+              <option value="apparel">Fashion Apparel (cate_6752)</option>
+              <option value="home">Smart Home (cate_1120)</option>
+            </select>
+            <input type="search" id="searchInput" oninput="handleSearch(this.value)" placeholder="Search 1.2M implicit items, categories, or ads..." class="w-full pl-44 pr-10 py-2 rounded-lg bg-slate-100/90 border border-slate-200 text-slate-800 placeholder-slate-400 text-sm focus:bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+            <span class="absolute right-3 text-slate-400 pointer-events-none">
+              <span class="material-symbols-outlined text-lg">search</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Persona Switcher, Cart, Telemetry, Theme Toggle -->
+        <div class="flex items-center gap-2.5 shrink-0">
+          
+          <!-- Persona Selector Dropdown -->
+          <div class="relative">
+            <select id="userPersonaSelect" onchange="handlePersonaChange(this.value)" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg py-2 pl-3 pr-8 focus:ring-primary focus:border-primary cursor-pointer transition-colors shadow-xs">
+              <option value="25" selected>👤 User #25 (Tech & Audio)</option>
+              <option value="104">👤 User #104 (Fashion & Apparel)</option>
+              <option value="87">👤 User #87 (Smart Home)</option>
+            </select>
+          </div>
+
+          <!-- View Mode Switcher -->
+          <button id="viewToggleBtn" onclick="toggleViewMode()" class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs" title="Toggle between Full Storefront and Product Deep-Dive">
+            <span class="material-symbols-outlined text-sm">swap_horiz</span>
+            <span id="viewToggleText" class="hidden sm:inline">Deep-Dive</span>
+          </button>
+
+          <!-- Wishlist Badge -->
+          <button onclick="dispatchSparkEvent('fav', currentProduct.itemKey, 3.0, 'Toggled Wishlist')" class="p-2 rounded-lg bg-white hover:bg-rose-50 border border-slate-200 text-rose-500 hover:text-rose-600 transition-colors relative shadow-xs" title="Wishlist">
+            <span class="material-symbols-outlined text-lg">favorite</span>
+            <span id="wishlistCount" class="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-rose-600 text-white font-code text-[10px] font-bold">2</span>
+          </button>
+
+          <!-- Cart Trigger -->
+          <button onclick="toggleCartDrawer(true)" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-emerald-50 border border-slate-200 text-slate-700 hover:text-emerald-700 transition-colors relative shadow-xs">
+            <span class="material-symbols-outlined text-lg text-emerald-600">shopping_bag</span>
+            <span class="text-xs font-semibold hidden sm:inline">Cart</span>
+            <span id="cartCountBadge" class="px-1.5 py-0.2 rounded-full bg-emerald-600 text-white font-code text-[10px] font-bold">2</span>
+          </button>
+
+          <!-- Telemetry Drawer Trigger -->
+          <button onclick="toggleTelemetryDrawer(true)" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-md shadow-indigo-500/20 active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-base">monitoring</span>
+            <span class="hidden lg:inline">Cluster Telemetry</span>
+          </button>
+
+          <!-- Dark/Light Mode Toggle -->
+          <button onclick="toggleTheme()" class="p-2 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 transition-colors shadow-xs" title="Toggle Dark/Light Mode">
+            <span id="themeIcon" class="material-symbols-outlined text-lg">dark_mode</span>
+          </button>
+
+        </div>
+      </div>
+    </header>
+
+    <!-- Context Status Sub-bar -->
+    <div class="border-b border-slate-200 bg-white/70 px-4 lg:px-8 py-2 text-xs">
+      <div class="max-w-7xl mx-auto flex items-center justify-between text-slate-500">
+        <div class="flex items-center gap-2">
+          <span class="text-slate-500">Active Persona:</span>
+          <span id="activePersonaBadge" class="font-code font-bold text-indigo-700">User #25 (Tech & Audio • pvalue=2 • shopping_level=3)</span>
+        </div>
+        <div class="flex items-center gap-4 font-code text-[11px]">
+          <span class="text-emerald-700 flex items-center gap-1 font-semibold">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            Broadcast Hash Join Ready
+          </span>
+          <span class="hidden sm:inline text-slate-300">|</span>
+          <span class="hidden sm:inline text-slate-500">ALS Matrix Rank: 12 • Latent Factors Loaded</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 2. MAIN CONTENT AREA (DYNAMIC VIEW MODES)                                  -->
+    <!-- ========================================================================= -->
+    <main class="flex-1 max-w-7xl mx-auto w-full px-4 lg:px-8 py-8 space-y-10">
+
+      <!-- ===================================================================== -->
+      <!-- VIEW 1: FULL STOREFRONT & AD AUCTION VIEW (DEFAULT)                   -->
+      <!-- ===================================================================== -->
+      <div id="storefrontView" class="space-y-8">
+
+        <!-- Quick Filter Category Pills & Cluster Shards -->
+        <div class="flex items-center justify-between gap-3 overflow-x-auto pb-1 scrollbar-none border-b border-slate-200 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-slate-500">Cluster Slice:</span>
+            <button onclick="handleCategorySelect('all')" id="pill-all" class="category-pill px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-primary text-white shadow-xs">
+              All Clusters
+            </button>
+            <button onclick="handleCategorySelect('electronics')" id="pill-electronics" class="category-pill px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100 shadow-2xs">
+              Electronics (cate_4231)
+            </button>
+            <button onclick="handleCategorySelect('apparel')" id="pill-apparel" class="category-pill px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100 shadow-2xs">
+              Fashion Apparel (cate_6752)
+            </button>
+            <button onclick="handleCategorySelect('home')" id="pill-home" class="category-pill px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100 shadow-2xs">
+              Smart Home (cate_1120)
+            </button>
+          </div>
+          <div class="hidden sm:flex items-center gap-2 font-code text-xs text-slate-500">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Local Cluster: 20 Workers</span>
+          </div>
+        </div>
+
+        <!-- Top Sponsored Hero Banner (Won by CTR Model) -->
+        <section id="heroSponsoredAd" class="relative rounded-2xl overflow-hidden border border-amber-200/90 bg-gradient-to-r from-amber-50/90 via-orange-50/40 to-indigo-50/60 p-6 lg:p-8 shadow-xs">
+          <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+            <div class="space-y-3 max-w-2xl">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded-full bg-amber-100/90 border border-amber-300 text-amber-900 font-code text-xs font-bold flex items-center gap-1">
+                  <span class="material-symbols-outlined text-sm">campaign</span>
+                  <span>SPONSORED AUCTION WINNER</span>
+                </span>
+                <span id="heroAdCtrBadge" class="px-2 py-0.5 rounded bg-white/90 border border-amber-200 text-amber-900 font-code text-xs shadow-2xs">
+                  Predicted CTR: <strong>6.84%</strong> (Ranked by Random Forest)
+                </span>
+              </div>
+              <h2 id="heroAdTitle" class="font-headline text-2xl lg:text-3xl font-bold text-slate-900 leading-tight">
+                Next-Gen High-Speed NVMe 2TB SSD Pro
+              </h2>
+              <p id="heroAdDesc" class="text-sm text-slate-600 leading-relaxed">
+                Direct match with your high engagement in hardware benchmarks. Unlocked PCIe 4.0 read speeds up to 7,450 MB/s. Limited-time sponsored offer.
+              </p>
+              <div class="flex items-center gap-4 pt-1">
+                <span id="heroAdPrice" class="text-2xl font-bold font-headline text-slate-900">$149.00</span>
+                <span id="heroAdOriginalPrice" class="text-sm text-slate-400 line-through">$199.00</span>
+                <button onclick="handleHeroAdClick()" class="px-5 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-amber-500/20 flex items-center gap-2 active:scale-95">
+                  <span class="material-symbols-outlined text-sm">shopping_cart</span>
+                  <span>Claim Sponsored Deal</span>
+                </button>
+              </div>
+            </div>
+            <div class="w-full lg:w-72 shrink-0 aspect-[4/3] rounded-xl overflow-hidden border border-slate-200 bg-white shadow-xs">
+              <img id="heroAdImg" src="https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=600&q=80" alt="Sponsored Ad Product" class="w-full h-full object-cover">
+            </div>
+          </div>
+        </section>
+
+        <!-- Section: Personalized Organic Recommendations (Spark Implicit ALS) -->
+        <section class="space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+            <div>
+              <h3 class="font-headline text-xl font-bold text-slate-900 flex items-center gap-2">
+                <span>Recommended For You</span>
+                <span class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-code font-semibold">
+                  Spark Implicit ALS (Rank=12, α=20)
+                </span>
+              </h3>
+              <p class="text-xs text-slate-500">Generated from weighted browsing, carting, and purchase history.</p>
+            </div>
+            <span class="text-xs text-emerald-700 font-code font-semibold">Catalog Coverage: 51.5%</span>
+          </div>
+
+          <!-- Product Grid: Organic + Interleaved Sponsored Placements -->
+          <div id="catalogGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Dynamically Rendered by JS -->
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- VIEW 2: PRODUCT DEEP-DIVE & ALS EXPLAINABILITY VIEW (XAI)             -->
+      <!-- ===================================================================== -->
+      <div id="productDetailView" class="hidden space-y-10">
+
+        <!-- Back to Storefront Link -->
+        <div class="flex items-center justify-between">
+          <button onclick="setViewMode('store')" class="flex items-center gap-2 text-xs font-semibold text-primary hover:text-indigo-800 transition-colors">
+            <span class="material-symbols-outlined text-sm">arrow_back</span>
+            <span>Back to Storefront Catalog</span>
+          </button>
+          <span class="font-code text-xs text-slate-500">Active Shard: cate_4231_brand_8109</span>
+        </div>
+
+        <!-- Showcase & Quick Buy Grid -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          <!-- Image Showcase (5 Cols) -->
+          <div class="lg:col-span-5 space-y-4">
+            <div class="relative aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-sm group">
+              <img id="detailMainImg" src="https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=1000&q=80" alt="Active Product" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+              <div class="absolute top-4 left-4">
+                <span id="detailMatchBadge" class="px-3 py-1 rounded-full bg-white/95 border border-indigo-200 text-indigo-700 font-code text-xs font-bold shadow-xs">
+                  94% Spark ALS Affinity Match
+                </span>
+              </div>
+            </div>
+
+            <!-- Thumbnails -->
+            <div class="grid grid-cols-4 gap-3">
+              <button onclick="swapDetailImg(0)" class="aspect-square rounded-lg overflow-hidden border-2 border-primary bg-white shadow-2xs">
+                <img id="thumb0" src="https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=300&q=80" alt="1" class="w-full h-full object-cover">
+              </button>
+              <button onclick="swapDetailImg(1)" class="aspect-square rounded-lg overflow-hidden border border-slate-200 hover:border-slate-400 bg-white shadow-2xs">
+                <img id="thumb1" src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=300&q=80" alt="2" class="w-full h-full object-cover">
+              </button>
+              <button onclick="swapDetailImg(2)" class="aspect-square rounded-lg overflow-hidden border border-slate-200 hover:border-slate-400 bg-white shadow-2xs">
+                <img id="thumb2" src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=300&q=80" alt="3" class="w-full h-full object-cover">
+              </button>
+              <button onclick="swapDetailImg(3)" class="aspect-square rounded-lg overflow-hidden border border-slate-200 hover:border-slate-400 bg-white shadow-2xs">
+                <img id="thumb3" src="https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=300&q=80" alt="4" class="w-full h-full object-cover">
+              </button>
+            </div>
+          </div>
+
+          <!-- Product Specs & Controls (7 Cols) -->
+          <div class="lg:col-span-7 space-y-6">
+            <div class="space-y-2 border-b border-slate-200 pb-5">
+              <div class="flex items-center gap-3">
+                <span id="detailItemKey" class="px-2.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-code text-xs text-indigo-700 font-semibold">
+                  Brand #8109 • cate_4231
+                </span>
+                <span class="text-xs text-slate-500">itemKey: <strong id="detailItemKeyRaw" class="text-slate-800">cate_4231_brand_8109</strong></span>
+                <span class="flex items-center gap-1 text-amber-500 text-xs font-semibold">
+                  <span class="material-symbols-outlined text-sm">star</span>
+                  <span>4.8 (412 ratings)</span>
+                </span>
+              </div>
+
+              <h1 id="detailTitle" class="font-headline text-2xl lg:text-3xl font-bold text-slate-900 leading-tight">
+                Smart ANC Wireless Earbuds with Dual-Cavity Resonance
+              </h1>
+              
+              <p id="detailDesc" class="text-sm text-slate-600 leading-relaxed">
+                Featuring 42dB hybrid active noise cancellation, custom graphene dynamic drivers, and 36-hour total battery playback. Implicitly recommended for User #25 based on extensive audio hardware browsing history.
+              </p>
+            </div>
+
+            <!-- Price & Discount -->
+            <div class="flex items-center gap-3">
+              <span id="detailPrice" class="font-headline text-3xl font-bold text-slate-900">$89.99</span>
+              <span id="detailOriginalPrice" class="text-slate-400 line-through text-lg">$129.99</span>
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-code text-xs font-bold">
+                SAVE $40.00 (31% OFF)
+              </span>
+            </div>
+
+            <!-- Transaction Controls -->
+            <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+              <div class="flex flex-wrap items-center gap-4">
+                <div class="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
+                  <button onclick="adjustDetailQty(-1)" class="px-3 py-2 text-slate-600 hover:bg-slate-200 font-bold">-</button>
+                  <span id="detailQtyDisplay" class="px-4 py-2 font-code text-sm font-semibold text-slate-900 bg-white">1</span>
+                  <button onclick="adjustDetailQty(1)" class="px-3 py-2 text-slate-600 hover:bg-slate-200 font-bold">+</button>
+                </div>
+
+                <button onclick="handleDetailAddToCart()" class="flex-1 py-3 px-6 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold text-xs uppercase tracking-wider shadow-md shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2 transition-all">
+                  <span class="material-symbols-outlined text-base">add_shopping_cart</span>
+                  <span>Add to Cart (Log w=4.0)</span>
+                </button>
+
+                <button onclick="handleDetailBuyNow()" class="py-3 px-6 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs uppercase tracking-wider shadow-md shadow-emerald-600/20 active:scale-95 flex items-center justify-center gap-2 transition-all">
+                  <span class="material-symbols-outlined text-base">bolt</span>
+                  <span>Instant Buy (w=5.0)</span>
+                </button>
+              </div>
+
+              <div class="flex items-center gap-2 text-xs text-slate-500 pt-1 font-code">
+                <span class="material-symbols-outlined text-emerald-600 text-sm">verified_user</span>
+                <span>Interacting with this item dispatches real-time training instances to PySpark MLlib.</span>
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- Spark ALS Mathematical Explainability Panel (INT315 Core) -->
+        <section class="rounded-2xl border border-indigo-100 bg-white p-6 lg:p-8 space-y-6 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 text-primary flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl">psychology</span>
+              </div>
+              <div>
+                <h2 class="font-headline text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <span>Spark ALS Recommendation Breakdown</span>
+                  <span class="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-code font-semibold border border-indigo-200">
+                    Explainable AI (XAI)
+                  </span>
+                </h2>
+                <p class="text-xs text-slate-500">
+                  Mathematical deconstruction of Apache Spark Implicit Alternating Least Squares (ALS) score for the active user.
+                </p>
+              </div>
+            </div>
+
+            <div class="font-code text-xs px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700">
+              Score: <strong class="text-indigo-700 font-bold" id="detailFormulaScore">r̂_ui = u_25ᵀ · v_8109 = 0.892</strong>
+            </div>
+          </div>
+
+          <!-- 3-Column Mathematical Breakdown -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Col 1: Implicit Events -->
+            <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200 space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5 font-headline">
+                  <span class="material-symbols-outlined text-primary text-sm">history</span>
+                  <span>1. Implicit Feedback Events</span>
+                </span>
+                <span class="font-code text-[11px] text-slate-500">User Logs</span>
+              </div>
+              <p class="text-xs text-slate-600">
+                Frequency transformed into implicit confidence weights <code class="text-indigo-700 font-bold font-code">c_ui = 1 + α · r_ui</code> (with rate parameter α = 20):
+              </p>
+              <div class="space-y-2 font-code text-xs">
+                <div class="p-2 rounded bg-white border border-slate-200 flex justify-between">
+                  <span class="text-slate-500">Page Views (pv, w=1.0):</span>
+                  <span class="font-bold text-slate-900">8 times (c = 161.0)</span>
+                </div>
+                <div class="p-2 rounded bg-white border border-slate-200 flex justify-between">
+                  <span class="text-slate-500">Wishlist (fav, w=3.0):</span>
+                  <span class="font-bold text-rose-600">2 times (c = 121.0)</span>
+                </div>
+                <div class="p-2 rounded bg-white border border-slate-200 flex justify-between">
+                  <span class="text-slate-500">Cart Add (cart, w=4.0):</span>
+                  <span class="font-bold text-emerald-600">1 time (c = 81.0)</span>
+                </div>
+              </div>
+              <div class="text-[11px] text-slate-500 font-code">
+                Aggregate Confidence: <strong class="text-indigo-700 font-bold">c_ui = 363.0</strong>
+              </div>
+            </div>
+
+            <!-- Col 2: Latent Vector Projection -->
+            <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200 space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5 font-headline">
+                  <span class="material-symbols-outlined text-purple-600 text-sm">view_column</span>
+                  <span>2. Latent Factors (Rank=12)</span>
+                </span>
+                <span class="font-code text-[11px] text-purple-700 font-bold">Interactive Matrix Dot</span>
+              </div>
+              <p class="text-xs text-slate-600">
+                Adjust latent sliders to simulate dynamic matrix projection <code class="text-indigo-700 font-code font-bold">uᵀ · v</code>:
+              </p>
+              <div class="space-y-2.5 font-code text-xs">
+                <div class="space-y-1">
+                  <div class="flex justify-between items-center text-[11px]">
+                    <span class="text-slate-500">k₁ (Tech & Gadgets):</span>
+                    <span id="k1Val" class="text-slate-900 font-bold">+0.312</span>
+                  </div>
+                  <input type="range" id="k1Slider" min="0" max="500" value="312" oninput="updateLatentCalculation()" class="w-full accent-indigo-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+                </div>
+                <div class="space-y-1">
+                  <div class="flex justify-between items-center text-[11px]">
+                    <span class="text-slate-500">k₂ (Brand / Category):</span>
+                    <span id="k2Val" class="text-slate-900 font-bold">+0.284</span>
+                  </div>
+                  <input type="range" id="k2Slider" min="0" max="500" value="284" oninput="updateLatentCalculation()" class="w-full accent-purple-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+                </div>
+                <div class="space-y-1">
+                  <div class="flex justify-between items-center text-[11px]">
+                    <span class="text-slate-500">k₃ (Price Elasticity):</span>
+                    <span id="k3Val" class="text-slate-900 font-bold">+0.120</span>
+                  </div>
+                  <input type="range" id="k3Slider" min="0" max="500" value="120" oninput="updateLatentCalculation()" class="w-full accent-amber-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+                </div>
+              </div>
+              <div class="p-2 rounded bg-white border border-slate-200 flex items-center justify-between text-[11px] font-code">
+                <span class="text-slate-500">Computed Score:</span>
+                <span id="interactiveScoreDisplay" class="font-bold text-emerald-700">r̂_ui = 0.892 (94% Match)</span>
+              </div>
+              <div class="text-[11px] text-slate-500 font-code">
+                Model Loss: <strong class="text-emerald-700 font-bold">ε = 0.0143 (NDCG@10 = 0.0176)</strong>
+              </div>
+            </div>
+
+            <!-- Col 3: Ad Auction vs Organic Split -->
+            <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200 space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5 font-headline">
+                  <span class="material-symbols-outlined text-amber-600 text-sm">balance</span>
+                  <span>3. Auction Interleaving Policy</span>
+                </span>
+                <span class="font-code text-[11px] text-emerald-700 font-bold">Organic Slot</span>
+              </div>
+              <p class="text-xs text-slate-600">
+                Evaluating whether this slot should serve an ad or organic recommendation:
+              </p>
+              <div class="p-2.5 rounded bg-white border border-slate-200 space-y-1.5 text-xs font-code">
+                <div class="flex justify-between">
+                  <span class="text-slate-500">Predicted Organic Utility:</span>
+                  <span class="font-bold text-indigo-700">0.892 ALS</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-500">Highest Sponsored Bid:</span>
+                  <span class="font-bold text-amber-700">$1.24 eCPM (CTR: 6.8%)</span>
+                </div>
+                <div class="flex justify-between border-t border-slate-100 pt-1 font-bold">
+                  <span class="text-slate-700">Interleaver Policy:</span>
+                  <span class="text-emerald-700">Serve Organic</span>
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-500">
+                Preserves user trust by guaranteeing top affinity slots remain non-sponsored.
+              </p>
+            </div>
+
+          </div>
+
+          <!-- Hyperparameter Bar -->
+          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 font-code text-xs text-slate-600 flex flex-wrap items-center justify-between gap-2">
+            <span><code>ALS(rank=12, maxIter=10, regParam=0.08, alpha=20.0, implicitPrefs=True)</code></span>
+            <span class="text-emerald-700 font-semibold">20 Cores Parallel Training</span>
+          </div>
+        </section>
+
+      </div>
+
+    </main>
+
+    <!-- ========================================================================= -->
+    <!-- 3. SLIDE-OVER CART DRAWER                                                 -->
+    <!-- ========================================================================= -->
+    <div id="cartBackdrop" onclick="toggleCartDrawer(false)" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 hidden transition-opacity"></div>
+    <div id="cartDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white border-l border-slate-200 z-50 transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+      <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-emerald-600">shopping_bag</span>
+          <h3 class="font-headline font-bold text-lg text-slate-900">Your Shopping Cart</h3>
+          <span id="cartDrawerBadge" class="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-code text-xs">2 items</span>
+        </div>
+        <button onclick="toggleCartDrawer(false)" class="text-slate-400 hover:text-slate-700">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="px-4 py-2.5 bg-indigo-50/70 border-b border-indigo-100 flex items-center gap-2 text-xs font-code text-indigo-700">
+        <span class="material-symbols-outlined text-sm text-primary">sensors</span>
+        <span>Cart events dispatch weight <strong>r_ui = 4.0</strong> to Spark.</span>
+      </div>
+
+      <div id="cartItemList" class="flex-1 overflow-y-auto p-4 space-y-3">
+        <!-- Rendered by JS -->
+      </div>
+
+      <div class="p-5 border-t border-slate-200 space-y-3 bg-slate-50/90">
+        <div class="space-y-1.5 text-xs text-slate-600">
+          <div class="flex justify-between">
+            <span>Subtotal</span>
+            <span id="cartSubtotal" class="font-code font-semibold text-slate-900">$209.49</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Estimated Sales Tax (8.25%)</span>
+            <span id="cartTax" class="font-code text-slate-500">$17.28</span>
+          </div>
+          <div class="flex justify-between font-bold text-base text-slate-900 pt-2 border-t border-slate-200">
+            <span>Total</span>
+            <span id="cartTotal" class="font-code text-emerald-700 font-bold">$226.77</span>
+          </div>
+        </div>
+
+        <button onclick="handleInstantCheckout()" class="w-full py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-emerald-600/20 active:scale-95 flex items-center justify-center gap-2 transition-all">
+          <span class="material-symbols-outlined text-sm">shopping_bag</span>
+          <span>Instant Checkout (Dispatch 'buy' w=5.0)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 4. LIVE CLUSTER TELEMETRY & MODEL INSPECTOR DRAWER (INT315 Evaluation)    -->
+    <!-- ========================================================================= -->
+    <div id="telemetryBackdrop" onclick="toggleTelemetryDrawer(false)" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 hidden transition-opacity"></div>
+    <div id="telemetryDrawer" class="fixed top-0 right-0 h-full w-full max-w-xl bg-white border-l border-slate-200 z-50 transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+      
+      <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 rounded-lg bg-indigo-50 border border-indigo-200 text-primary">
+            <span class="material-symbols-outlined text-xl">speed</span>
+          </div>
+          <div>
+            <h3 class="font-headline font-bold text-lg text-slate-900">Cluster Telemetry &amp; Model Inspector</h3>
+            <p class="text-xs text-slate-500">Apache Spark 3.5.1 / PySpark MLlib Empirical Benchmarks</p>
+          </div>
+        </div>
+        <button onclick="toggleTelemetryDrawer(false)" class="text-slate-400 hover:text-slate-700">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-5 space-y-6 text-xs">
+        
+        <!-- 1. Active Cluster Topology -->
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <span class="font-bold text-slate-900 flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-base">hub</span>
+              <span>1. Cluster Architecture Profile</span>
+            </span>
+            <span class="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-code text-[11px] font-semibold">
+              STATUS: HEALTHY
+            </span>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5 font-code">
+            <div class="p-2 rounded bg-white border border-slate-200 shadow-2xs">
+              <span class="text-slate-500 block text-[10px]">Framework</span>
+              <span class="text-slate-900 font-bold">Apache Spark 3.5.1</span>
+              <span class="text-indigo-600 text-[10px] block">PySpark MLlib</span>
+            </div>
+            <div class="p-2 rounded bg-white border border-slate-200 shadow-2xs">
+              <span class="text-slate-500 block text-[10px]">Topology Mode</span>
+              <span class="text-slate-900 font-bold">local[*] (20 Cores)</span>
+              <span class="text-emerald-600 text-[10px] block">Parallelism: 20</span>
+            </div>
+            <div class="p-2 rounded bg-white border border-slate-200 shadow-2xs">
+              <span class="text-slate-500 block text-[10px]">Storage Format</span>
+              <span class="text-slate-900 font-bold">Apache Parquet</span>
+              <span class="text-amber-700 text-[10px] block">Snappy Compressed</span>
+            </div>
+            <div class="p-2 rounded bg-white border border-slate-200 shadow-2xs">
+              <span class="text-slate-500 block text-[10px]">Driver Heap</span>
+              <span class="text-slate-900 font-bold">4.0 GB Configured</span>
+              <span class="text-slate-500 text-[10px] block">8 Shuffle Partitions</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Product Recommendation Metrics (Implicit ALS) -->
+        <div class="p-4 rounded-xl bg-slate-50 border border-indigo-100 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <span class="font-bold text-slate-900 flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-base">insights</span>
+              <span>2. Recommender Metrics (Implicit ALS)</span>
+            </span>
+            <span class="font-code text-[11px] text-indigo-700 font-semibold">Rank=12, α=20.0</span>
+          </div>
+          <div class="grid grid-cols-4 gap-2 text-center font-code">
+            <div class="p-2 rounded bg-white border border-slate-200 shadow-2xs">
+              <span class="text-[10px] text-slate-500 block">NDCG@10</span>
+              <span class="font-bold text-indigo-700 text-sm">0.0176</span>
+            </div>
+            <div class="p-2 rounded bg-white border border-slate-200 shadow-2xs">
+              <span class="text-[10px] text-slate-500 block">Precision@10</span>
+              <span class="font-bold text-indigo-700 text-sm">0.0138</span>
+            </div>
+            <div class="p-2 rounded bg-white border border-slate-200 shadow-2xs">
+              <span class="text-[10px] text-slate-500 block">Recall@10</span>
+              <span class="font-bold text-indigo-700 text-sm">0.0206</span>
+            </div>
+            <div class="p-2 rounded bg-white border border-slate-200 shadow-2xs">
+              <span class="text-[10px] text-slate-500 block">Coverage</span>
+              <span class="font-bold text-emerald-700 text-sm">51.51%</span>
+            </div>
+          </div>
+          <div class="text-[11px] text-slate-600 font-code">
+            ALS Throughput: <strong class="text-slate-800">3,470.9 records/sec</strong> (9.21s for 31,978 training rows).
+          </div>
+        </div>
+
+        <!-- 3. Ad CTR Models Comparison (LR vs RF) -->
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <span class="font-bold text-slate-900 flex items-center gap-2">
+              <span class="material-symbols-outlined text-amber-600 text-base">compare_arrows</span>
+              <span>3. Ad CTR Prediction: LR vs RF</span>
+            </span>
+            <span class="font-code text-[11px] text-amber-700 font-semibold">Class Imbalance</span>
+          </div>
+          <div class="space-y-2 font-code">
+            <div class="p-2.5 rounded bg-white border border-slate-200 space-y-1 shadow-2xs">
+              <div class="flex justify-between font-bold text-slate-900">
+                <span>Distributed Logistic Regression:</span>
+                <span class="text-indigo-700">ROC-AUC: 0.5946</span>
+              </div>
+              <div class="flex justify-between text-[11px] text-slate-500">
+                <span>PR-AUC: 0.1627 | F1: 0.8083</span>
+                <span>Train: 5.86s (2,058 rec/s)</span>
+              </div>
+            </div>
+            <div class="p-2.5 rounded bg-white border border-slate-200 space-y-1 shadow-2xs">
+              <div class="flex justify-between font-bold text-slate-900">
+                <span>Distributed Random Forest (60 Trees):</span>
+                <span class="text-amber-700">ROC-AUC: 0.5832</span>
+              </div>
+              <div class="flex justify-between text-[11px] text-slate-500">
+                <span>Log-Loss: 0.3791 (Best)</span>
+                <span>Inference: 5,092 rec/s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Amdahl's Law Speedup Curve -->
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <span class="font-bold text-slate-900 flex items-center gap-2">
+              <span class="material-symbols-outlined text-emerald-600 text-base">trending_up</span>
+              <span>4. Cluster Partitioning Speedup</span>
+            </span>
+            <span class="font-code text-[11px] text-emerald-700 font-bold">1.50x @ 4 Partitions</span>
+          </div>
+          <div class="space-y-2 font-code text-xs">
+            <div class="space-y-1">
+              <div class="flex justify-between text-slate-700">
+                <span>p = 1 (Sequential Baseline)</span>
+                <span class="text-slate-500">1.00x (0.451s)</span>
+              </div>
+              <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div class="bg-slate-400 h-full rounded-full" style="width: 50%;"></div>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <div class="flex justify-between text-slate-700">
+                <span>p = 2 (Distributed)</span>
+                <span class="text-indigo-600 font-semibold">0.96x (0.470s)</span>
+              </div>
+              <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div class="bg-indigo-500 h-full rounded-full" style="width: 48%;"></div>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <div class="flex justify-between text-slate-700 font-bold">
+                <span class="text-emerald-700">p = 4 (Sweet Spot)</span>
+                <span class="text-emerald-700">1.50x (0.300s)</span>
+              </div>
+              <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div class="bg-emerald-600 h-full rounded-full" style="width: 75%;"></div>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <div class="flex justify-between text-slate-700">
+                <span>p = 8 (Shuffle Latency)</span>
+                <span class="text-slate-500">1.31x (0.345s)</span>
+              </div>
+              <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div class="bg-slate-400 h-full rounded-full" style="width: 65%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Interactive Spark Job Simulation Terminal -->
+        <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3 font-code shadow-md">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="font-bold text-white flex items-center gap-2">
+              <span class="material-symbols-outlined text-emerald-400 text-base">terminal</span>
+              <span>5. Live Spark Job Execution DAG</span>
+            </span>
+            <span id="simJobStatus" class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px]">IDLE</span>
+          </div>
+
+          <!-- Progress bar -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-[10px] text-slate-400">
+              <span id="simJobStep">Ready to simulate cluster job</span>
+              <span id="simJobPercent">0%</span>
+            </div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+              <div id="simJobBar" class="bg-primary h-full rounded-full transition-all duration-300" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- Terminal Output Box -->
+          <div id="simTerminalLog" class="p-2.5 rounded-lg bg-black/70 border border-slate-800 text-[10px] text-slate-300 h-28 overflow-y-auto space-y-1 leading-relaxed font-mono">
+            <div class="text-slate-500">> Spark master: spark://local[*]:7077 (20 workers registered)</div>
+            <div class="text-slate-500">> Dataset: 42,000 behavior events + 15,000 CTR impressions</div>
+            <div class="text-slate-500">> Click 'Run Cluster Retrain Job' below to trigger DAG execution.</div>
+          </div>
+
+          <div class="flex items-center gap-2 pt-1">
+            <button id="runSimJobBtn" onclick="runSparkSimulationJob()" class="flex-1 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 active:scale-95">
+              <span class="material-symbols-outlined text-sm">play_arrow</span>
+              <span>Run Cluster Retrain Job</span>
+            </button>
+            <button onclick="exportClusterReport()" class="py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs transition-all flex items-center gap-1" title="Export Cluster Benchmark Report">
+              <span class="material-symbols-outlined text-sm">download</span>
+              <span>Export Report</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-600">
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>PySpark Context: local[*] (20 Cores)</span>
+        </div>
+        <button onclick="dispatchSparkEvent('telemetry', 'cluster_refresh', 1.0, 'Re-polled Cluster Telemetry Metrics')" class="px-3 py-1.5 rounded bg-primary hover:bg-primary-hover text-white font-bold text-xs shadow-xs">
+          Refresh Metrics
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 max-w-md pointer-events-none"></div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-6 px-4 lg:px-8 text-xs text-slate-500">
+      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <strong class="text-slate-900 font-semibold">Smart Commerce AI</strong> — Distributed Big Data E-Commerce Architecture (INT315 CA2)
+        </div>
+        <div class="flex items-center gap-3 font-code text-slate-400">
+          <span>Spark 3.5.1</span>
+          <span>•</span>
+          <span>Implicit ALS</span>
+          <span>•</span>
+          <span>CTR Classification</span>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 5. CLIENT-SIDE APPLICATION DATA & DYNAMIC LOGIC                           -->
+  <!-- ========================================================================= -->
+  <script>
+    // Persona Definitions with specific catalogs, latent profiles, and ad winners
+    const PERSONAS = {
+      "25": {
+        name: "User #25 (Tech & Gadgets Enthusiast)",
+        badge: "User #25 (Tech & Audio • pvalue=2 • shopping_level=3)",
+        heroAd: {
+          title: "Next-Gen High-Speed NVMe 2TB SSD Pro",
+          desc: "Direct match with your high engagement in hardware benchmarks. Unlocked PCIe 4.0 read speeds up to 7,450 MB/s. Limited-time sponsored offer.",
+          price: "$149.00",
+          originalPrice: "$199.00",
+          ctr: "6.84%",
+          img: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=600&q=80",
+          itemKey: "cate_4231_brand_7710"
+        },
+        primaryProduct: {
+          id: "prod_earbuds",
+          title: "Smart ANC Wireless Earbuds with Dual-Cavity Resonance",
+          itemKey: "Brand #8109 • cate_4231",
+          itemKeyRaw: "cate_4231_brand_8109",
+          desc: "Featuring 42dB hybrid active noise cancellation, custom graphene dynamic drivers, and 36-hour total battery playback. Implicitly recommended for User #25 based on extensive audio hardware browsing history.",
+          price: "$89.99",
+          originalPrice: "$129.99",
+          matchScore: "94% Spark ALS Affinity Match",
+          scoreFormula: "r̂_ui = u_25ᵀ · v_8109 = 0.892",
+          mainImg: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=1000&q=80",
+          thumbs: [
+            "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=300&q=80",
+            "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=300&q=80",
+            "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=300&q=80",
+            "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=300&q=80"
+          ]
+        },
+        catalog: [
+          {
+            id: "cat_1",
+            title: "Smart ANC Wireless Earbuds",
+            brand: "Brand #8109 • Electronics",
+            itemKey: "cate_4231_brand_8109",
+            price: 89.99,
+            origPrice: 129.99,
+            match: "94% ALS Match",
+            isSponsored: false,
+            img: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=600&q=80"
+          },
+          {
+            id: "cat_2",
+            title: "Mechanical 75% Wireless Keyboard",
+            brand: "Brand #3042 • Electronics",
+            itemKey: "cate_4231_brand_3042",
+            price: 119.50,
+            origPrice: 159.00,
+            match: "91% ALS Match",
+            isSponsored: false,
+            img: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80"
+          },
+          {
+            id: "cat_3",
+            title: "4K 144Hz Gaming Monitor Ultra",
+            brand: "Brand #9912 • Electronics",
+            itemKey: "cate_4231_brand_9912",
+            price: 449.00,
+            origPrice: 599.00,
+            match: "88% ALS Match",
+            isSponsored: false,
+            img: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80"
+          },
+          {
+            id: "cat_4",
+            title: "Fast NVMe SSD 2TB PCIe 4.0",
+            brand: "camp_3910 • Random Forest",
+            itemKey: "cate_4231_brand_7710",
+            price: 149.00,
+            origPrice: 199.00,
+            match: "Sponsored • 6.8% CTR",
+            isSponsored: true,
+            img: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=600&q=80"
+          }
+        ]
+      },
+      "104": {
+        name: "User #104 (Fashion & Apparel Lifestyle)",
+        badge: "User #104 (Apparel & Luxury • pvalue=3 • shopping_level=2)",
+        heroAd: {
+          title: "Designer Silk Scarf Collection Autumn",
+          desc: "Handcrafted 100% mulberry silk with artisan patterns. High demographic affinity with your lifestyle browsing history.",
+          price: "$75.00",
+          originalPrice: "$110.00",
+          ctr: "5.92%",
+          img: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?auto=format&fit=crop&w=600&q=80",
+          itemKey: "cate_6752_brand_9940"
+        },
+        primaryProduct: {
+          id: "prod_coat",
+          title: "Premium Cashmere Wool Overcoat",
+          itemKey: "Brand #1290 • cate_6752",
+          itemKeyRaw: "cate_6752_brand_1290",
+          desc: "Tailored Italian double-faced cashmere wool coat designed for cold weather elegance. Recommends top affinity based on your frequent winter fashion views.",
+          price: "$289.00",
+          originalPrice: "$399.00",
+          matchScore: "96% Spark ALS Affinity Match",
+          scoreFormula: "r̂_ui = u_104ᵀ · v_1290 = 0.914",
+          mainImg: "https://images.unsplash.com/photo-1539533018447-63fcce667883?auto=format&fit=crop&w=1000&q=80",
+          thumbs: [
+            "https://images.unsplash.com/photo-1539533018447-63fcce667883?auto=format&fit=crop&w=300&q=80",
+            "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=300&q=80",
+            "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=300&q=80",
+            "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=300&q=80"
+          ]
+        },
+        catalog: [
+          {
+            id: "cat_5",
+            title: "Premium Cashmere Overcoat",
+            brand: "Brand #1290 • Apparel",
+            itemKey: "cate_6752_brand_1290",
+            price: 289.00,
+            origPrice: 399.00,
+            match: "96% ALS Match",
+            isSponsored: false,
+            img: "https://images.unsplash.com/photo-1539533018447-63fcce667883?auto=format&fit=crop&w=600&q=80"
+          },
+          {
+            id: "cat_6",
+            title: "Urban Chelsea Leather Boots",
+            brand: "Brand #4412 • Footwear",
+            itemKey: "cate_6752_brand_4412",
+            price: 165.00,
+            origPrice: 220.00,
+            match: "93% ALS Match",
+            isSponsored: false,
+            img: "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=600&q=80"
+          },
+          {
+            id: "cat_7",
+            title: "Minimalist Automatic Watch",
+            brand: "Brand #8801 • Accessories",
+            itemKey: "cate_6752_brand_8801",
+            price: 210.00,
+            origPrice: 280.00,
+            match: "89% ALS Match",
+            isSponsored: false,
+            img: "https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=600&q=80"
+          },
+          {
+            id: "cat_8",
+            title: "Designer Mulberry Silk Scarf",
+            brand: "camp_8812 • Random Forest",
+            itemKey: "cate_6752_brand_9940",
+            price: 75.00,
+            origPrice: 110.00,
+            match: "Sponsored • 5.9% CTR",
+            isSponsored: true,
+            img: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?auto=format&fit=crop&w=600&q=80"
+          }
+        ]
+      },
+      "87": {
+        name: "User #87 (Smart Home Living)",
+        badge: "User #87 (Home & Living • pvalue=2 • shopping_level=1)",
+        heroAd: {
+          title: "HEPA Smart Air Purifier Pro Ultra",
+          desc: "Filters 99.97% of airborne allergens and dust. Integrates with Alexa and Google Home for automated schedule cleaning.",
+          price: "$189.00",
+          originalPrice: "$249.00",
+          ctr: "5.12%",
+          img: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=600&q=80",
+          itemKey: "cate_1120_brand_5502"
+        },
+        primaryProduct: {
+          id: "prod_vac",
+          title: "Robot Vacuum & Mop with LiDAR Navigation",
+          itemKey: "Brand #3345 • cate_1120",
+          itemKeyRaw: "cate_1120_brand_3345",
+          desc: "5000Pa powerful suction, smart obstacle avoidance, auto-emptying base, and real-time multi-floor mapping via mobile app.",
+          price: "$349.99",
+          originalPrice: "$499.99",
+          matchScore: "95% Spark ALS Affinity Match",
+          scoreFormula: "r̂_ui = u_87ᵀ · v_3345 = 0.887",
+          mainImg: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1000&q=80",
+          thumbs: [
+            "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=300&q=80",
+            "https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=300&q=80",
+            "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=300&q=80",
+            "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=300&q=80"
+          ]
+        },
+        catalog: [
+          {
+            id: "cat_9",
+            title: "Robot Vacuum & Mop with LiDAR",
+            brand: "Brand #3345 • Home",
+            itemKey: "cate_1120_brand_3345",
+            price: 349.99,
+            origPrice: 499.99,
+            match: "95% ALS Match",
+            isSponsored: false,
+            img: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=600&q=80"
+          },
+          {
+            id: "cat_10",
+            title: "Smart Ambient LED Floor Lamp",
+            brand: "Brand #7712 • Home",
+            itemKey: "cate_1120_brand_7712",
+            price: 79.50,
+            origPrice: 109.00,
+            match: "90% ALS Match",
+            isSponsored: false,
+            img: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80"
+          },
+          {
+            id: "cat_11",
+            title: "Espresso Maker with Milk Steamer",
+            brand: "Brand #2201 • Kitchen",
+            itemKey: "cate_1120_brand_2201",
+            price: 199.00,
+            origPrice: 260.00,
+            match: "87% ALS Match",
+            isSponsored: false,
+            img: "https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?auto=format&fit=crop&w=600&q=80"
+          },
+          {
+            id: "cat_12",
+            title: "HEPA Smart Air Purifier Pro",
+            brand: "camp_4421 • Random Forest",
+            itemKey: "cate_1120_brand_5502",
+            price: 189.00,
+            origPrice: 249.00,
+            match: "Sponsored • 5.1% CTR",
+            isSponsored: true,
+            img: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=600&q=80"
+          }
+        ]
+      }
+    };
+
+    // State Variables
+    let currentUserId = "25";
+    let currentProduct = PERSONAS["25"].primaryProduct;
+    let detailQty = 1;
+    let viewMode = "store"; // "store" or "detail"
+    let currentSearchQuery = "";
+    let currentCategoryFilter = "all";
+    let isRunningSim = false;
+
+    let cartItems = [
+      { id: "c1", title: "Smart ANC Wireless Earbuds", price: 89.99, qty: 1, img: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=200&q=80" },
+      { id: "c2", title: "Mechanical 75% Keyboard", price: 119.50, qty: 1, img: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=200&q=80" }
+    ];
+
+    // Initialization
+    function initApp() {
+      renderStorefront();
+      renderCart();
+      updateLatentCalculation();
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initApp);
+    } else {
+      initApp();
+    }
+
+    function setViewMode(mode) {
+      viewMode = mode;
+      const storeEl = document.getElementById("storefrontView");
+      const detailEl = document.getElementById("productDetailView");
+      const toggleText = document.getElementById("viewToggleText");
+
+      if (mode === "detail") {
+        storeEl.classList.add("hidden");
+        detailEl.classList.remove("hidden");
+        toggleText.textContent = "Storefront";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        detailEl.classList.add("hidden");
+        storeEl.classList.remove("hidden");
+        toggleText.textContent = "Deep-Dive";
+      }
+    }
+
+    function toggleViewMode() {
+      setViewMode(viewMode === "store" ? "detail" : "store");
+    }
+
+    function handleSearch(val) {
+      currentSearchQuery = (val || "").trim().toLowerCase();
+      renderStorefront();
+    }
+
+    function handleCategorySelect(val) {
+      currentCategoryFilter = val;
+      const select = document.getElementById("searchCategory");
+      if (select) select.value = val;
+
+      // Update Pill Styling
+      document.querySelectorAll(".category-pill").forEach(el => {
+        el.classList.remove("bg-primary", "text-white");
+        el.classList.add("bg-white", "border", "border-slate-200", "text-slate-700");
+      });
+      const activePill = document.getElementById(`pill-${val}`);
+      if (activePill) {
+        activePill.classList.remove("bg-white", "border", "border-slate-200", "text-slate-700");
+        activePill.classList.add("bg-primary", "text-white");
+      }
+
+      // Synchronize Persona if specific cluster selected
+      if (val === "electronics" && currentUserId !== "25") {
+        document.getElementById("userPersonaSelect").value = "25";
+        handlePersonaChange("25");
+        return;
+      } else if (val === "apparel" && currentUserId !== "104") {
+        document.getElementById("userPersonaSelect").value = "104";
+        handlePersonaChange("104");
+        return;
+      } else if (val === "home" && currentUserId !== "87") {
+        document.getElementById("userPersonaSelect").value = "87";
+        handlePersonaChange("87");
+        return;
+      }
+      renderStorefront();
+    }
+
+    function handlePersonaChange(userId) {
+      currentUserId = userId;
+      const persona = PERSONAS[userId];
+      currentProduct = persona.primaryProduct;
+
+      // Update Persona Badges
+      document.getElementById("activePersonaBadge").textContent = persona.badge;
+
+      // Update Hero Sponsored Ad
+      document.getElementById("heroAdTitle").textContent = persona.heroAd.title;
+      document.getElementById("heroAdDesc").textContent = persona.heroAd.desc;
+      document.getElementById("heroAdPrice").textContent = persona.heroAd.price;
+      document.getElementById("heroAdOriginalPrice").textContent = persona.heroAd.originalPrice;
+      document.getElementById("heroAdImg").src = persona.heroAd.img;
+      document.getElementById("heroAdCtrBadge").innerHTML = `Predicted CTR: <strong>${persona.heroAd.ctr}</strong> (Ranked by Random Forest)`;
+
+      // Update Product Detail
+      updateProductDetailView();
+      updateLatentCalculation();
+
+      // Re-render Store Catalog
+      renderStorefront();
+
+      // Dispatch toast
+      dispatchSparkEvent("profile_switch", `user_${userId}`, 1.0, `Switched persona to ${persona.name}. Reloaded user latent vector.`);
+    }
+
+    function updateProductDetailView() {
+      const p = currentProduct;
+      document.getElementById("detailTitle").textContent = p.title;
+      document.getElementById("detailDesc").textContent = p.desc;
+      document.getElementById("detailPrice").textContent = p.price;
+      document.getElementById("detailOriginalPrice").textContent = p.originalPrice;
+      document.getElementById("detailItemKey").textContent = p.itemKey;
+      document.getElementById("detailItemKeyRaw").textContent = p.itemKeyRaw;
+      document.getElementById("detailMatchBadge").textContent = p.matchScore;
+      document.getElementById("detailFormulaScore").textContent = p.scoreFormula;
+      document.getElementById("detailMainImg").src = p.mainImg;
+
+      p.thumbs.forEach((src, idx) => {
+        const thumb = document.getElementById(`thumb${idx}`);
+        if (thumb) thumb.src = src;
+      });
+    }
+
+    function swapDetailImg(idx) {
+      const p = currentProduct;
+      if (p.thumbs[idx]) {
+        document.getElementById("detailMainImg").src = p.thumbs[idx];
+      }
+    }
+
+    function updateLatentCalculation() {
+      const s1 = document.getElementById("k1Slider");
+      const s2 = document.getElementById("k2Slider");
+      const s3 = document.getElementById("k3Slider");
+      if (!s1 || !s2 || !s3) return;
+
+      const k1 = parseInt(s1.value) / 1000;
+      const k2 = parseInt(s2.value) / 1000;
+      const k3 = parseInt(s3.value) / 1000;
+
+      document.getElementById("k1Val").textContent = `+${k1.toFixed(3)}`;
+      document.getElementById("k2Val").textContent = `+${k2.toFixed(3)}`;
+      document.getElementById("k3Val").textContent = `+${k3.toFixed(3)}`;
+
+      // Factor weights
+      const v1 = 0.95;
+      const v2 = 0.88;
+      const v3 = 0.72;
+      const baseline = 0.22;
+
+      const dot = (k1 * v1) + (k2 * v2) + (k3 * v3) + baseline;
+      const score = Math.min(0.999, Math.max(0.1, dot));
+      const matchPct = Math.min(99, Math.round(score * 105));
+
+      document.getElementById("interactiveScoreDisplay").textContent = `r̂_ui = ${score.toFixed(3)} (${matchPct}% Match)`;
+      document.getElementById("detailFormulaScore").textContent = `r̂_ui = u_${currentUserId}ᵀ · v_item = ${score.toFixed(3)}`;
+      document.getElementById("detailMatchBadge").textContent = `${matchPct}% Spark ALS Affinity Match`;
+    }
+
+    function renderStorefront() {
+      const persona = PERSONAS[currentUserId];
+      const grid = document.getElementById("catalogGrid");
+      grid.innerHTML = "";
+
+      let items = persona.catalog;
+      if (currentSearchQuery) {
+        items = items.filter(item => 
+          item.title.toLowerCase().includes(currentSearchQuery) ||
+          item.brand.toLowerCase().includes(currentSearchQuery) ||
+          item.itemKey.toLowerCase().includes(currentSearchQuery)
+        );
+      }
+
+      if (items.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-12 text-center text-slate-400 space-y-3">
+            <span class="material-symbols-outlined text-4xl text-slate-300">search_off</span>
+            <p class="text-sm font-semibold text-slate-600">No items match your query "${currentSearchQuery}".</p>
+            <button onclick="document.getElementById('searchInput').value=''; handleSearch('');" class="px-4 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-primary font-code text-xs font-semibold shadow-2xs">Clear Search</button>
+          </div>
+        `;
+        return;
+      }
+
+      items.forEach((item) => {
+        const card = document.createElement("article");
+        const borderClass = item.isSponsored ? "border-amber-200 bg-gradient-to-b from-amber-50/40 via-white to-white" : "border-slate-200/90 bg-white";
+        const badgeClass = item.isSponsored ? "bg-amber-100/90 text-amber-900 border-amber-300" : "bg-indigo-50 text-indigo-700 border-indigo-200";
+
+        card.className = `rounded-2xl border ${borderClass} overflow-hidden shadow-xs flex flex-col group transition-all hover:border-primary hover:shadow-lg hover:-translate-y-1 duration-200`;
+        card.innerHTML = `
+          <div class="relative aspect-video w-full bg-slate-100 overflow-hidden cursor-pointer" onclick="openProductDetail('${item.id}')">
+            <img src="${item.img}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+            <div class="absolute top-2.5 left-2.5">
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full ${badgeClass} border font-code text-[11px] font-semibold shadow-2xs backdrop-blur-md">
+                ${item.isSponsored ? '<span class="material-symbols-outlined text-xs">campaign</span>' : ''}
+                <span>${item.match}</span>
+              </span>
+            </div>
+          </div>
+          <div class="p-4 flex-1 flex flex-col justify-between gap-3">
+            <div>
+              <span class="text-[11px] font-code text-slate-500 line-clamp-1">${item.brand}</span>
+              <h4 class="font-headline text-sm font-semibold text-slate-900 line-clamp-1 group-hover:text-primary transition-colors cursor-pointer" onclick="openProductDetail('${item.id}')">
+                ${item.title}
+              </h4>
+              <div class="flex items-baseline gap-2 mt-1.5">
+                <span class="font-headline text-base font-bold text-slate-900">$${item.price.toFixed(2)}</span>
+                <span class="text-xs text-slate-400 line-through">$${item.origPrice.toFixed(2)}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 pt-1">
+              <button onclick="addToCart('${item.id}', '${item.title}', ${item.price}, '${item.img}', '${item.itemKey}')" class="flex-1 py-2 px-3 rounded-lg ${item.isSponsored ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold' : 'bg-primary hover:bg-primary-hover text-white'} text-xs font-bold font-headline transition-all flex items-center justify-center gap-1.5 shadow-xs active:scale-95">
+                <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
+                <span>${item.isSponsored ? 'Claim Ad Deal' : 'Add to Cart'}</span>
+              </button>
+              <button onclick="openProductDetail('${item.id}')" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200" title="Explain AI Breakdown">
+                <span class="material-symbols-outlined text-sm">info</span>
+              </button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function runSparkSimulationJob() {
+      if (isRunningSim) return;
+      isRunningSim = true;
+
+      const btn = document.getElementById("runSimJobBtn");
+      const statusEl = document.getElementById("simJobStatus");
+      const stepEl = document.getElementById("simJobStep");
+      const percentEl = document.getElementById("simJobPercent");
+      const barEl = document.getElementById("simJobBar");
+      const termEl = document.getElementById("simTerminalLog");
+
+      btn.disabled = true;
+      btn.classList.add("opacity-50", "cursor-not-allowed");
+      statusEl.textContent = "RUNNING";
+      statusEl.className = "px-2 py-0.5 rounded bg-amber-950 border border-amber-500/50 text-amber-400 font-code text-[10px] animate-pulse";
+
+      termEl.innerHTML = "";
+      const log = (msg, color="text-slate-300") => {
+        const d = document.createElement("div");
+        d.className = `${color} leading-relaxed`;
+        d.textContent = msg;
+        termEl.appendChild(d);
+        termEl.scrollTop = termEl.scrollHeight;
+      };
+
+      const stages = [
+        { p: 15, step: "Stage 0: MapPartitionsRDD (20 partitions)", msg: "> [Stage 0] MapPartitionsRDD: 42,000 behavior records partitioned into 20 tasks... (0.42s)", c: "text-indigo-300" },
+        { p: 35, step: "Stage 1: ALS Solver (rank=12, alpha=20.0)", msg: "> [Stage 1] Spark MLlib ALS: Alternating Least Squares Iterations 1-10... loss=0.0143 (9.21s)", c: "text-purple-300" },
+        { p: 60, step: "Stage 2: Ad CTR Classifier (RF 60 trees)", msg: "> [Stage 2] Fitting Distributed Random Forest on 15,000 impressions... Log-Loss: 0.3791 (6.55s)", c: "text-amber-300" },
+        { p: 85, step: "Stage 3: Auction Interleaving & Top-K", msg: "> [Stage 3] Preserving organic slot 1 (affinity 0.892) & auctioning slot 2 (eCPM $1.24)... (0.30s)", c: "text-cyan-300" },
+        { p: 100, step: "Stage 4: Write Snappy Parquet (speedup 1.50x)", msg: "> [Stage 4] Saved recommendations to results/product_recommendations_csv. Status: SUCCESS!", c: "text-emerald-400" }
+      ];
+
+      let currentStage = 0;
+      const timer = setInterval(() => {
+        if (currentStage >= stages.length) {
+          clearInterval(timer);
+          isRunningSim = false;
+          btn.disabled = false;
+          btn.classList.remove("opacity-50", "cursor-not-allowed");
+          statusEl.textContent = "COMPLETED";
+          statusEl.className = "px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500 text-emerald-400 font-code text-[10px]";
+          stepEl.textContent = "Cluster DAG executed successfully (1.50x Amdahl Speedup)";
+          dispatchSparkEvent("cluster_job", "dag_complete", 5.0, "Spark Re-train DAG Job Finished across 20 Cores!");
+          return;
+        }
+
+        const s = stages[currentStage];
+        percentEl.textContent = `${s.p}%`;
+        barEl.style.width = `${s.p}%`;
+        stepEl.textContent = s.step;
+        log(s.msg, s.c);
+        currentStage++;
+      }, 800);
+    }
+
+    function exportClusterReport() {
+      const reportData = {
+        project: "Smart Commerce AI - INT315 Cluster Computing CA2",
+        framework: "Apache Spark 3.5.1 / PySpark MLlib",
+        clusterTopology: {
+          master: "local[*]",
+          logicalCores: 20,
+          memoryHeap: "4GB",
+          shufflePartitions: 8,
+          storageFormat: "Apache Parquet (Snappy)"
+        },
+        alsModel: {
+          rank: 12,
+          regParam: 0.08,
+          alpha: 20.0,
+          iterations: 10,
+          implicitPrefs: true,
+          trainingTimeSec: 9.213,
+          throughputRecordsPerSec: 3470.9,
+          metrics: {
+            ndcgAt10: 0.0176,
+            precisionAt10: 0.0138,
+            recallAt10: 0.0206,
+            coveragePct: 51.51
+          }
+        },
+        ctrModels: {
+          logisticRegression: { roc_auc: 0.5946, pr_auc: 0.1627, f1: 0.8083, logLoss: 0.3825, trainTimeSec: 5.86 },
+          randomForest: { roc_auc: 0.5832, pr_auc: 0.1553, f1: 0.8083, logLoss: 0.3791, trainTimeSec: 6.55 }
+        },
+        amdahlSpeedup: [
+          { partitions: 1, timeSec: 0.451, speedup: 1.00 },
+          { partitions: 2, timeSec: 0.470, speedup: 0.96 },
+          { partitions: 4, timeSec: 0.300, speedup: 1.50 },
+          { partitions: 8, timeSec: 0.345, speedup: 1.31 }
+        ],
+        timestamp: new Date().toISOString()
+      };
+
+      const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Smart_Commerce_AI_Cluster_Telemetry_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      dispatchSparkEvent("export", "telemetry_json", 2.0, "Downloaded Cluster Telemetry JSON Report");
+    }
+
+    function openProductDetail(productId) {
+      setViewMode("detail");
+      dispatchSparkEvent("pv", currentProduct.itemKeyRaw, 1.0, `Viewed product details (Implicit pv weight = 1.0)`);
+    }
+
+    function handleHeroAdClick() {
+      const hero = PERSONAS[currentUserId].heroAd;
+      addToCart("hero_deal", hero.title, parseFloat(hero.price.replace("$", "")), hero.img, hero.itemKey);
+      dispatchSparkEvent("clk", hero.itemKey, 4.0, `Sponsored Ad Clicked & Claimed! (Conversion recorded by Random Forest)`);
+    }
+
+    // Cart Operations
+    function addToCart(id, title, price, img, itemKey) {
+      const existing = cartItems.find(item => item.id === id);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cartItems.push({ id, title, price, qty: 1, img });
+      }
+      renderCart();
+      toggleCartDrawer(true);
+      dispatchSparkEvent("cart", itemKey || "item_general", 4.0, `Added '${title}' to cart (Implicit cart weight = 4.0)`);
+    }
+
+    function removeFromCart(id) {
+      cartItems = cartItems.filter(item => item.id !== id);
+      renderCart();
+    }
+
+    function renderCart() {
+      const list = document.getElementById("cartItemList");
+      list.innerHTML = "";
+
+      let subtotal = 0;
+      let totalQty = 0;
+
+      if (cartItems.length === 0) {
+        list.innerHTML = `
+          <div class="py-12 text-center text-slate-400 space-y-2">
+            <span class="material-symbols-outlined text-4xl text-slate-300">remove_shopping_cart</span>
+            <p class="text-xs text-slate-500">Your shopping cart is currently empty.</p>
+          </div>
+        `;
+      } else {
+        cartItems.forEach(item => {
+          subtotal += item.price * item.qty;
+          totalQty += item.qty;
+
+          const row = document.createElement("div");
+          row.className = "p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-3";
+          row.innerHTML = `
+            <img src="${item.img}" alt="${item.title}" class="w-12 h-12 object-cover rounded-lg bg-white shrink-0 border border-slate-200 shadow-2xs">
+            <div class="flex-1 min-w-0">
+              <h4 class="font-headline text-xs font-semibold text-slate-900 truncate">${item.title}</h4>
+              <span class="text-xs font-code text-indigo-700 font-bold">$${item.price.toFixed(2)} × ${item.qty}</span>
+            </div>
+            <button onclick="removeFromCart('${item.id}')" class="text-slate-400 hover:text-rose-600 p-1" title="Remove item">
+              <span class="material-symbols-outlined text-base">delete</span>
+            </button>
+          `;
+          list.appendChild(row);
+        });
+      }
+
+      const tax = subtotal * 0.0825;
+      const total = subtotal + tax;
+
+      document.getElementById("cartSubtotal").textContent = `$${subtotal.toFixed(2)}`;
+      document.getElementById("cartTax").textContent = `$${tax.toFixed(2)}`;
+      document.getElementById("cartTotal").textContent = `$${total.toFixed(2)}`;
+      document.getElementById("cartCountBadge").textContent = totalQty;
+      document.getElementById("cartDrawerBadge").textContent = `${totalQty} item${totalQty === 1 ? '' : 's'}`;
+    }
+
+    function adjustDetailQty(delta) {
+      detailQty = Math.max(1, detailQty + delta);
+      document.getElementById("detailQtyDisplay").textContent = detailQty;
+    }
+
+    function handleDetailAddToCart() {
+      const p = currentProduct;
+      const priceNum = parseFloat(p.price.replace("$", ""));
+      for (let i = 0; i < detailQty; i++) {
+        addToCart(p.id, p.title, priceNum, p.mainImg, p.itemKeyRaw);
+      }
+    }
+
+    function handleDetailBuyNow() {
+      dispatchSparkEvent("buy", currentProduct.itemKeyRaw, 5.0, `Instant Buy Dispatched! Event 'buy' with implicit weight r_ui = 5.0`);
+      alert("Order placed successfully! Dispatched 'buy' event (w=5.0) to Spark cluster.");
+    }
+
+    function handleInstantCheckout() {
+      if (cartItems.length === 0) return;
+      dispatchSparkEvent("buy", "order_batch_checkout", 5.0, `Cart Checkout Dispatched! Total $${document.getElementById('cartTotal').textContent}. Event 'buy' (w=5.0).`);
+      cartItems = [];
+      renderCart();
+      toggleCartDrawer(false);
+      alert("Checkout complete! Purchased items recorded in Spark cluster memory.");
+    }
+
+    // Drawer Toggles
+    function toggleCartDrawer(open) {
+      const drawer = document.getElementById("cartDrawer");
+      const backdrop = document.getElementById("cartBackdrop");
+      if (open) {
+        backdrop.classList.remove("hidden");
+        drawer.classList.remove("translate-x-full");
+      } else {
+        backdrop.classList.add("hidden");
+        drawer.classList.add("translate-x-full");
+      }
+    }
+
+    function toggleTelemetryDrawer(open) {
+      const drawer = document.getElementById("telemetryDrawer");
+      const backdrop = document.getElementById("telemetryBackdrop");
+      if (open) {
+        backdrop.classList.remove("hidden");
+        drawer.classList.remove("translate-x-full");
+      } else {
+        backdrop.classList.add("hidden");
+        drawer.classList.add("translate-x-full");
+      }
+    }
+
+    // Theme Toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const icon = document.getElementById("themeIcon");
+      if (html.classList.contains("dark")) {
+        html.classList.remove("dark");
+        html.classList.add("light");
+        icon.textContent = "dark_mode";
+      } else {
+        html.classList.remove("light");
+        html.classList.add("dark");
+        icon.textContent = "light_mode";
+      }
+    }
+
+    // Toast Dispatcher (Spark Event Simulator)
+    function dispatchSparkEvent(eventType, itemKey, implicitWeight, customMessage) {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+
+      let badgeColor = "bg-primary text-white";
+      if (eventType === "buy") badgeColor = "bg-emerald-600 text-white";
+      if (eventType === "fav") badgeColor = "bg-rose-600 text-white";
+      if (eventType === "cart") badgeColor = "bg-indigo-600 text-white";
+      if (eventType === "clk") badgeColor = "bg-amber-500 text-slate-950 font-bold";
+
+      toast.className = "p-3.5 rounded-xl bg-white border border-slate-200 shadow-xl flex items-start gap-3 transform translate-y-2 opacity-0 transition-all duration-200 pointer-events-auto max-w-sm";
+      toast.innerHTML = `
+        <div class="px-2 py-0.5 rounded font-code text-[10px] font-bold ${badgeColor} shrink-0 uppercase tracking-wider">
+          ${eventType}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs text-slate-800 font-semibold leading-snug">${customMessage}</div>
+          <div class="text-[10px] text-slate-500 font-code mt-0.5">
+            User #${currentUserId} • weight r_ui = ${implicitWeight.toFixed(1)} • ${itemKey}
+          </div>
+        </div>
+      `;
+
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove("translate-y-2", "opacity-0");
+      });
+
+      setTimeout(() => {
+        toast.classList.add("opacity-0", "translate-y-2");
+        setTimeout(() => toast.remove(), 250);
+      }, 4000);
+    }
+  </script>
+
+</body>
+</html>

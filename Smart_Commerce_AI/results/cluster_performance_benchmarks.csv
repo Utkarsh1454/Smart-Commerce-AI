@@ -1,0 +1,7 @@
+stage,records_in,partitions,execution_time_sec,throughput_records_sec,status
+"ALS Model Training (Implicit Feedback)",31978,1,9.213,3470.9,"COMPLETED"
+"Top-10 Recommendation Generation (All Users)",1200,8,3.379,355.2,"COMPLETED"
+"CTR Training: Distributed Logistic Regression (ElasticNet)",12058,1,5.86,2057.7,"COMPLETED"
+"CTR Inference: Distributed Logistic Regression (ElasticNet)",2942,1,0.577,5100.8,"COMPLETED"
+"CTR Training: Distributed Random Forest (60 Trees, Depth 8)",12058,1,6.549,1841.2,"COMPLETED"
+"CTR Inference: Distributed Random Forest (60 Trees, Depth 8)",2942,1,0.578,5091.5,"COMPLETED"

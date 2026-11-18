@@ -1,0 +1,3 @@
+model_key,model_name,roc_auc,pr_auc,accuracy,precision,recall,f1_score,log_loss,train_time_sec,inference_time_sec
+logistic_regression,Distributed Logistic Regression (ElasticNet),0.59465,0.16267,0.86914,0.7554,0.86914,0.80829,0.38253,5.86,0.577
+random_forest,"Distributed Random Forest (60 Trees, Depth 8)",0.58321,0.15529,0.86914,0.7554,0.86914,0.80829,0.37907,6.549,0.578

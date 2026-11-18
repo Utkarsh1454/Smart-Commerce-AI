@@ -1,0 +1,15 @@
+model,metric,value
+"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","ndcg_at_5",0.01432801441739214
+"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","precision_at_5",0.014345287739783158
+"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","recall_at_5",0.01037789242543204
+"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","map_at_5",0.00690505977203225
+"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","ndcg_at_10",0.017578673669468817
+"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","precision_at_10",0.013844870725604669
+"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","recall_at_10",0.0206296807631253
+"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","map_at_10",0.006515698524490574
+"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","catalog_coverage_pct",51.51041666666667
+"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","distinct_items_recommended",989
+"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","total_catalog_items",1920
+"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","implicit_rmse_diagnostic",2.016255410037867
+"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","train_time_sec",9.213
+"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","rec_gen_time_sec",3.379
