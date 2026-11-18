@@ -1,5 +1,6 @@
 import os
 import sys
+from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 import json
 
@@ -8,54 +9,37 @@ RESULTS_DIR = ROOT / "results"
 DATA_DIR = ROOT / "data"
 
 # -----------------------------------------------------------------------------
-# TOP-LEVEL WSGI / ASGI / SERVERLESS ENTRYPOINTS
-# Satisfies Vercel, Gunicorn, AWS Lambda, uWSGI, and Render deployment runners:
-# Exports 'app', 'application', and 'handler'
+# TOP-LEVEL WSGI / SERVERLESS ENTRYPOINTS (Vercel BaseHTTPRequestHandler)
+# Satisfies Vercel Python Runtime, Gunicorn, AWS Lambda, Render:
+# Exports 'handler', 'app', and 'application'
 # -----------------------------------------------------------------------------
-def handler(request, *args, **kwargs):
-    """Serverless HTTP request handler for Vercel / AWS Lambda."""
-    index_file = ROOT.parent / "index.html"
-    if not index_file.exists():
-        index_file = ROOT / "index.html"
-
-    if index_file.exists():
-        html_content = index_file.read_text(encoding="utf-8")
-    else:
-        html_content = "<h1>Smart Commerce AI</h1><p>Storefront index.html active.</p>"
-
-    return {
-        "statusCode": 200,
-        "headers": {
-            "Content-Type": "text/html; charset=utf-8",
-            "Cache-Control": "public, max-age=0, must-revalidate"
-        },
-        "body": html_content
-    }
-
-class WSGIApplication:
-    """WSGI compliant application for Vercel, Gunicorn, uWSGI."""
-    def __call__(self, environ, start_response):
+class handler(BaseHTTPRequestHandler):
+    """Vercel Python Serverless Function entrypoint."""
+    def do_GET(self):
         index_file = ROOT.parent / "index.html"
         if not index_file.exists():
             index_file = ROOT / "index.html"
 
         if index_file.exists():
-            body = index_file.read_bytes()
+            content = index_file.read_bytes()
         else:
-            body = b"<h1>Smart Commerce AI</h1><p>Storefront active.</p>"
+            content = b"<h1>Smart Commerce AI</h1><p>Storefront active.</p>"
 
-        status = '200 OK'
-        response_headers = [
-            ('Content-Type', 'text/html; charset=utf-8'),
-            ('Content-Length', str(len(body))),
-            ('Cache-Control', 'public, max-age=0, must-revalidate')
-        ]
-        start_response(status, response_headers)
-        return [body]
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(content)))
+        self.send_header("Cache-Control", "public, max-age=0, must-revalidate")
+        self.end_headers()
+        self.wfile.write(content)
 
-# Export top-level application variables
-app = WSGIApplication()
-application = app
+    def do_HEAD(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.end_headers()
+
+# Export alias variables
+app = handler
+application = handler
 
 # -----------------------------------------------------------------------------
 # STREAMLIT CLUSTER DASHBOARD
