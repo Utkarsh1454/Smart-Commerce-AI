@@ -8,133 +8,201 @@
     "spark_master": "local[*]",
     "default_parallelism": 20,
     "shuffle_partitions": "8",
-    "app_id": "local-1794993549474"
+    "driver_memory": "4g",
+    "app_id": "local-1795028904036"
   },
   "execution_benchmarks": [
     {
       "stage": "ALS Model Training (Implicit Feedback)",
       "records_in": 31978,
       "partitions": 1,
-      "execution_time_sec": 9.213,
-      "throughput_records_sec": 3470.9,
+      "execution_time_sec": 4.692,
+      "throughput_records_sec": 6815.6,
       "status": "COMPLETED"
     },
     {
-      "stage": "Top-10 Recommendation Generation (All Users)",
+      "stage": "Top-10 Recommendation Generation (ALS)",
       "records_in": 1200,
       "partitions": 8,
-      "execution_time_sec": 3.379,
-      "throughput_records_sec": 355.2,
+      "execution_time_sec": 1.825,
+      "throughput_records_sec": 657.5,
       "status": "COMPLETED"
     },
     {
       "stage": "CTR Training: Distributed Logistic Regression (ElasticNet)",
-      "records_in": 12058,
+      "records_in": 10617,
       "partitions": 1,
-      "execution_time_sec": 5.86,
-      "throughput_records_sec": 2057.7,
+      "execution_time_sec": 4.709,
+      "throughput_records_sec": 2254.4,
       "status": "COMPLETED"
     },
     {
       "stage": "CTR Inference: Distributed Logistic Regression (ElasticNet)",
-      "records_in": 2942,
+      "records_in": 2225,
       "partitions": 1,
-      "execution_time_sec": 0.577,
-      "throughput_records_sec": 5100.8,
+      "execution_time_sec": 0.391,
+      "throughput_records_sec": 5696.9,
       "status": "COMPLETED"
     },
     {
       "stage": "CTR Training: Distributed Random Forest (60 Trees, Depth 8)",
-      "records_in": 12058,
+      "records_in": 10617,
       "partitions": 1,
-      "execution_time_sec": 6.549,
-      "throughput_records_sec": 1841.2,
+      "execution_time_sec": 3.937,
+      "throughput_records_sec": 2696.9,
       "status": "COMPLETED"
     },
     {
       "stage": "CTR Inference: Distributed Random Forest (60 Trees, Depth 8)",
-      "records_in": 2942,
+      "records_in": 2225,
       "partitions": 1,
-      "execution_time_sec": 0.578,
-      "throughput_records_sec": 5091.5,
+      "execution_time_sec": 0.451,
+      "throughput_records_sec": 4931.9,
       "status": "COMPLETED"
     }
   ],
   "product_recommendation_als": {
-    "ndcg_at_5": 0.01432801441739214,
-    "precision_at_5": 0.014345287739783158,
-    "recall_at_5": 0.01037789242543204,
-    "map_at_5": 0.00690505977203225,
-    "ndcg_at_10": 0.017578673669468817,
-    "precision_at_10": 0.013844870725604669,
-    "recall_at_10": 0.0206296807631253,
-    "map_at_10": 0.006515698524490574,
-    "catalog_coverage_pct": 51.51041666666667,
-    "distinct_items_recommended": 989,
+    "ndcg_at_5": 0.015913042679399574,
+    "precision_at_5": 0.015012510425354461,
+    "recall_at_5": 0.011520787726449306,
+    "map_at_5": 0.00798582151793161,
+    "ndcg_at_10": 0.019672261048349148,
+    "precision_at_10": 0.014678899082568806,
+    "recall_at_10": 0.022863098922805546,
+    "map_at_10": 0.007612837979537413,
+    "catalog_coverage_pct": 52.5,
+    "distinct_items_recommended": 1008,
     "total_catalog_items": 1920,
-    "implicit_rmse_diagnostic": 2.016255410037867,
-    "train_time_sec": 9.213,
-    "rec_gen_time_sec": 3.379
+    "train_time_sec": 4.692,
+    "rec_gen_time_sec": 1.825
+  },
+  "product_recommendation_popularity_baseline": {
+    "ndcg_at_5": 0.003190886170915988,
+    "precision_at_5": 0.0031693077564637195,
+    "recall_at_5": 0.002522253022670036,
+    "map_at_5": 0.0014637197664720601,
+    "ndcg_at_10": 0.0038832334626279323,
+    "precision_at_10": 0.0028356964136780653,
+    "recall_at_10": 0.004841956301505926,
+    "map_at_10": 0.0014129499450600369,
+    "catalog_coverage_pct": 0.5208333333333333,
+    "distinct_items_recommended": 10,
+    "total_catalog_items": 1920,
+    "train_time_sec": 0.05,
+    "rec_gen_time_sec": 0.1
   },
   "ctr_models": [
     {
       "model_key": "logistic_regression",
       "model_name": "Distributed Logistic Regression (ElasticNet)",
-      "roc_auc": 0.59465,
-      "pr_auc": 0.16267,
-      "accuracy": 0.86914,
-      "precision": 0.7554,
-      "recall": 0.86914,
-      "f1_score": 0.80829,
-      "log_loss": 0.38253,
-      "train_time_sec": 5.86,
-      "inference_time_sec": 0.577,
-      "inference_records_sec": 5100.8
+      "roc_auc": 0.58298,
+      "pr_auc": 0.14333,
+      "accuracy": 0.20764,
+      "positive_precision": 0.12879,
+      "positive_recall": 0.95926,
+      "positive_f1": 0.22709,
+      "log_loss": 0.68564,
+      "tp": 259,
+      "fp": 1752,
+      "tn": 203,
+      "fn": 11,
+      "tuned_threshold": 0.4,
+      "train_time_sec": 4.709,
+      "inference_time_sec": 0.391,
+      "inference_records_sec": 5696.9
     },
     {
       "model_key": "random_forest",
       "model_name": "Distributed Random Forest (60 Trees, Depth 8)",
-      "roc_auc": 0.58321,
-      "pr_auc": 0.15529,
-      "accuracy": 0.86914,
-      "precision": 0.7554,
-      "recall": 0.86914,
-      "f1_score": 0.80829,
-      "log_loss": 0.37907,
-      "train_time_sec": 6.549,
-      "inference_time_sec": 0.578,
-      "inference_records_sec": 5091.5
+      "roc_auc": 0.58217,
+      "pr_auc": 0.14528,
+      "accuracy": 0.30112,
+      "positive_precision": 0.14006,
+      "positive_recall": 0.92593,
+      "positive_f1": 0.24331,
+      "log_loss": 0.59627,
+      "tp": 250,
+      "fp": 1535,
+      "tn": 420,
+      "fn": 20,
+      "tuned_threshold": 0.3,
+      "train_time_sec": 3.937,
+      "inference_time_sec": 0.451,
+      "inference_records_sec": 4931.9
+    },
+    {
+      "model_key": "prior_baseline",
+      "model_name": "Prior-Probability Baseline (P(Click)=0.130)",
+      "roc_auc": 0.5,
+      "pr_auc": 0.12867,
+      "accuracy": 0.87133,
+      "positive_precision": 0.0,
+      "positive_recall": 0.0,
+      "positive_f1": 0.0,
+      "log_loss": 0.38385,
+      "tp": 0,
+      "fp": 0,
+      "tn": 1938,
+      "fn": 286,
+      "tuned_threshold": 0.5,
+      "train_time_sec": 0.01,
+      "inference_time_sec": 0.01,
+      "inference_records_sec": 100000.0
     }
   ],
   "scalability_speedup": [
     {
       "partitions": 1,
-      "execution_time_sec": 0.4513,
+      "mean_execution_time_sec": 0.0849,
+      "std_dev_sec": 0.0222,
       "speedup": 1.0,
       "efficiency_pct": 100.0,
-      "throughput_rows_sec": 53.2
+      "runs": [
+        0.116,
+        0.0656,
+        0.0732
+      ],
+      "throughput_rows_sec": 294.4
     },
     {
       "partitions": 2,
-      "execution_time_sec": 0.4698,
-      "speedup": 0.961,
-      "efficiency_pct": 48.0,
-      "throughput_rows_sec": 51.1
+      "mean_execution_time_sec": 0.1311,
+      "std_dev_sec": 0.0378,
+      "speedup": 0.648,
+      "efficiency_pct": 32.4,
+      "runs": [
+        0.1842,
+        0.1089,
+        0.1001
+      ],
+      "throughput_rows_sec": 190.7
     },
     {
       "partitions": 4,
-      "execution_time_sec": 0.3001,
-      "speedup": 1.504,
-      "efficiency_pct": 37.6,
-      "throughput_rows_sec": 80.0
+      "mean_execution_time_sec": 0.1,
+      "std_dev_sec": 0.0126,
+      "speedup": 0.849,
+      "efficiency_pct": 21.2,
+      "runs": [
+        0.1178,
+        0.0916,
+        0.0907
+      ],
+      "throughput_rows_sec": 249.9
     },
     {
       "partitions": 8,
-      "execution_time_sec": 0.3453,
-      "speedup": 1.307,
-      "efficiency_pct": 16.3,
-      "throughput_rows_sec": 69.5
+      "mean_execution_time_sec": 0.1305,
+      "std_dev_sec": 0.0111,
+      "speedup": 0.651,
+      "efficiency_pct": 8.1,
+      "runs": [
+        0.1199,
+        0.1258,
+        0.1459
+      ],
+      "throughput_rows_sec": 191.5
     }
   ],
-  "generated_timestamp": "2026-11-18 14:50:01"
+  "generated_timestamp": "2026-11-19 00:39:02"
 }

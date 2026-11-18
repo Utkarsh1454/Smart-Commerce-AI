@@ -4,7 +4,9 @@ REVIEW ARTICLE
 
 # Distributed Recommender Systems and Click-Through Rate Prediction in Big Data E-Commerce: A PRISMA-Compliant Systematic Review and Cluster Computing Benchmark
 
-**Utkarsh Pandey¹ · Himanshu Shekhar¹ · INT315 Advanced Analytics Group¹**
+**Utkarsh Pandey¹**  
+*¹School of Computer Science & Engineering, Lovely Professional University, Phagwara, Punjab, India*  
+*Course: INT315 – Distributed and Cluster Computing (CA2)*
 
 Received: 14 September 2026 / Revised: 28 October 2026 / Accepted: 12 November 2026  
 © The Author(s), under exclusive licence to The Society for Reliability Engineering, Quality and Operations Management (SREQOM), India and Springer Science+Business Media, LLC, part of Springer Nature 2026
@@ -352,13 +354,13 @@ Tables 4 and 5 synthesize the comparative trade-offs between recommendation and 
 To substantiate the findings of the systematic review with empirical data, we executed a complete cluster evaluation of the **Smart Commerce AI** framework.
 
 #### 5.4.1 Cluster Hardware and Distributed Configuration
-All experiments were performed on a dedicated cluster computing node configured as follows:
-* **Operating System:** Windows 11 Enterprise (64-bit Architecture, x86_64)
+All experiments were performed on a dedicated cluster computing host configured as follows:
+* **Operating System:** Windows 11 Home (64-bit Architecture, x86_64)
 * **Compute Engine:** Apache Spark 3.5.1 (PySpark MLlib)
-* **Master Topology:** Distributed `local[*]` executor topology utilizing **20 logical CPU cores**
-* **Runtime Stack:** Python 3.13.1, OpenJDK 17.0.12 LTS, Java HotSpot(TM) 64-Bit Server VM
-* **Memory & Storage:** 4 GB dedicated JVM driver memory, Snappy-compressed Parquet columnar format
-* **Shuffle & Partitioning:** Default parallelism = 20, Shuffle partitions = 8, Broadcast join threshold = 10 MB
+* **Master Topology:** Distributed `local[*]` executor topology utilizing **8 logical CPU cores** (worker task threads)
+* **Runtime Stack:** Python 3.13.1, OpenJDK 17.0.10 LTS, Java HotSpot(TM) 64-Bit Server VM
+* **Memory & Storage:** 4 GB dedicated JVM driver memory (`spark.driver.memory = "4g"`), Snappy-compressed Parquet columnar format
+* **Shuffle & Partitioning:** Evaluated across $p \in \{1, 2, 4, 8\}$, Broadcast join threshold = 10 MB
 
 ---
 
@@ -369,75 +371,75 @@ Table 6 documents the measured stage-by-stage execution times and throughput rat
 
 | Pipeline Stage | Input Records ($N$) | Assigned Partitions ($p$) | Execution Time (s) | Measured Throughput (Records/s) | Execution Status |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **ALS Model Training (Implicit Feedback)** | 31,978 | 1 | 9.213 | **3,470.9** | **COMPLETED** |
-| **Top-10 Recommendation Generation (All Users)** | 1,200 | 8 | 3.379 | **355.2** | **COMPLETED** |
-| **CTR Training: Logistic Regression (ElasticNet)** | 12,058 | 1 | 5.860 | **2,057.7** | **COMPLETED** |
-| **CTR Inference: Logistic Regression** | 2,942 | 1 | 0.577 | **5,100.8** | **COMPLETED** |
-| **CTR Training: Random Forest (60 Trees, Depth 8)**| 12,058 | 1 | 6.549 | **1,841.2** | **COMPLETED** |
-| **CTR Inference: Random Forest** | 2,942 | 1 | 0.578 | **5,091.5** | **COMPLETED** |
+| **ALS Model Training (Implicit Feedback)** | 31,978 | 1 | 4.692 | **6,815.6** | **COMPLETED** |
+| **Top-10 Recommendation Generation (All Users)** | 1,200 | 8 | 1.825 | **657.5** | **COMPLETED** |
+| **CTR Training: Logistic Regression (ElasticNet)** | 10,617 | 1 | 4.709 | **2,254.4** | **COMPLETED** |
+| **CTR Inference: Logistic Regression** | 2,225 | 1 | 0.391 | **5,696.9** | **COMPLETED** |
+| **CTR Training: Random Forest (60 Trees, Depth 8)**| 10,617 | 1 | 3.937 | **2,696.9** | **COMPLETED** |
+| **CTR Inference: Random Forest** | 2,225 | 1 | 0.451 | **4,931.9** | **COMPLETED** |
+| **Auction Serving & Capping Engine** | 15,000 | 1 | 10.230 | **1,466.3** | **COMPLETED** |
 
-*Key Findings:* The implicit ALS engine achieved an execution throughput of **3,470.9 records/second** during matrix factorization. Distributed inference for ad click estimation achieved parity across models, delivering over **5,000 records/second**, comfortably fulfilling commercial latency requirements for batch auction scoring.
+*Key Findings:* The implicit ALS engine achieved an execution throughput of **6,815.6 records/second** during matrix factorization. Distributed inference for ad click estimation delivered over **4,900–5,600 records/second**, comfortably fulfilling commercial latency requirements for batch auction scoring.
 
 ---
 
-#### 5.4.3 Product Recommendation Ranking Quality
-Table 7 presents the empirical ranking accuracy and catalog exploration metrics obtained by the distributed implicit ALS model evaluated on a held-out test split.
+#### 5.4.3 Product Recommendation Ranking Quality: ALS vs. Popularity Baseline
+Table 7 presents the empirical ranking accuracy and catalog exploration metrics obtained by the distributed implicit ALS model contrasted with a Popularity Baseline evaluated on a held-out test split ($N=7,980$ interactions).
 
-**Table 7: Implicit ALS Product Recommendation Engine Evaluation**
+**Table 7: Implicit ALS vs. Popularity Baseline Recommendation Engine Evaluation**
 
-| Metric Category | Metric Identifier | Measured Value | Standard Benchmark Interpretation |
-| :--- | :--- | :---: | :--- |
-| **Ranking Accuracy** | $\text{NDCG}@5$ | `0.0143` | Position-discounted ranking relevance within top-5 |
-| | $\text{NDCG}@10$ | `0.0176` | Cumulative relative gain across top-10 candidates |
-| **Precision & Recall** | $\text{Precision}@5$ | `0.0143` | Proportion of true interaction hits in top-5 items |
-| | $\text{Precision}@10$ | `0.0138` | Proportion of true interaction hits in top-10 items |
-| | $\text{Recall}@5$ | `0.0104` | Fraction of total user test interactions captured @5 |
-| | $\text{Recall}@10$ | `0.0206` | Fraction of total user test interactions captured @10 |
-| **Mean Average Precision** | $\text{MAP}@5$ | `0.0069` | Mean rank-weighted precision score @5 |
-| | $\text{MAP}@10$ | `0.0065` | Mean rank-weighted precision score @10 |
-| **Catalog Exploration** | **Catalog Coverage** | **`51.51%`** | **989 distinct items recommended out of 1,920 total catalog items** |
-| **Diagnostic Metric** | Implicit Diagnostic RMSE | `2.0163` | Numerical convergence monitor (cautious interpretation) |
+| Metric Category | Metric Identifier | Popularity Baseline | Implicit ALS Recommender | Relative Gain (%) |
+| :--- | :--- | :---: | :---: | :---: |
+| **Ranking Accuracy** | $\text{NDCG}@5$ | `0.0032` | **`0.0159`** | **+398.7%** |
+| | $\text{NDCG}@10$ | `0.0039` | **`0.0197`** | **+406.9% (5.07×)** |
+| **Precision & Recall** | $\text{Precision}@5$ | `0.0032` | **`0.0150`** | **+373.5%** |
+| | $\text{Precision}@10$ | `0.0028` | **`0.0147`** | **+416.9% (5.17×)** |
+| | $\text{Recall}@5$ | `0.0025` | **`0.0115`** | **+357.1%** |
+| | $\text{Recall}@10$ | `0.0048` | **`0.0229`** | **+372.3%** |
+| **Mean Average Precision** | $\text{MAP}@5$ | `0.0015` | **`0.0080`** | **+447.3%** |
+| | $\text{MAP}@10$ | `0.0014` | **`0.0076`** | **+439.7%** |
+| **Catalog Exploration** | **Catalog Coverage** | **`0.52%`** (10 items) | **`52.50%`** (1,008 items) | **+10,096% (101×)** |
+| **Catalog Diversity** | Distinct Items Retained | 10 items | **1,008 items / 1,920** | **+9,980%** |
 
-*Key Findings:* A standout achievement of the confidence-weighted ALS formulation is its **51.51% catalog coverage** (recommending 989 distinct items out of 1,920). Conventional collaborative filtering models evaluated in literature frequently suffer from extreme popularity collapse, where top-ranked lists are dominated by less than $5\text{--}10\%$ of high-frequency items. The confidence formulation ($\alpha = 20.0$) successfully propagated preference signals into the mid- and long-tail of the e-commerce catalog.
+*Key Findings:* The Popularity Baseline exhibits severe popularity bias, recommending the exact same 10 products to all users and achieving an unacceptable 0.52% catalog coverage. Implicit ALS uncovers latent collaborative relationships across long-tail categories, recommending 1,008 unique products (52.50% catalog coverage) while simultaneously delivering a 5.07× higher NDCG@10.
 
 ---
 
 #### 5.4.4 Ad Click Prediction (CTR) Model Comparison
-Table 8 contrasts Distributed ElasticNet Logistic Regression against Distributed Random Forest on the held-out test split.
+Table 8 contrasts Distributed ElasticNet Logistic Regression against Distributed Random Forest and a Prior-Probability Baseline on the held-out test split ($N=2,225$, 13% positive click rate).
 
 **Table 8: CTR Prediction Model Performance Comparison**
 
-| Metric | Logistic Regression (ElasticNet) | Random Forest (60 Trees, Depth 8) | Delta / Superior Model |
-| :--- | :---: | :---: | :---: |
-| **ROC-AUC** | **`0.5946`** | `0.5832` | **Logistic Regression (+1.9%)** |
-| **PR-AUC** | **`0.1627`** | `0.1553` | **Logistic Regression (+4.8%)** |
-| **Classification Accuracy** | `86.91%` | `86.91%` | Parity (Reflects majority non-click class) |
-| **Weighted Precision** | `75.54%` | `75.54%` | Parity |
-| **Weighted Recall** | `86.91%` | `86.91%` | Parity |
-| **F1-Score** | `0.8083` | `0.8083` | Parity |
-| **Log-Loss (Cross-Entropy)** | `0.3825` | **`0.3791`** | **Random Forest (Lower is superior, -0.9%)** |
-| **Training Duration** | **5.860 s** | 6.549 s | **Logistic Regression (1.12× faster)** |
-| **Inference Throughput** | **5,100.8 rec/s** | 5,091.5 rec/s | Parity |
+| Metric | Prior-Probability Baseline | Logistic Regression (ElasticNet) | Random Forest (60 Trees, Depth 8) | Best Performing Model |
+| :--- | :---: | :---: | :---: | :---: |
+| **ROC-AUC** | 0.5000 | **0.5830** | 0.5822 | Logistic Regression (+0.1%) |
+| **PR-AUC** | 0.1287 | 0.1433 | **0.1453** | **Random Forest (+1.4%)** |
+| **Classification Accuracy** | 0.8713 | 0.2076 | **0.3011** | Prior (Trivial majority class) |
+| **Positive Precision** | 0.0000 | 0.1288 | **0.1401** | **Random Forest (+8.7%)** |
+| **Positive Recall** | 0.0000 | **0.9593** | 0.9259 | **Logistic Regression (+3.6%)** |
+| **Positive F1-Score** | 0.0000 | 0.2271 | **0.2433** | **Random Forest (+7.1%)** |
+| **Log-Loss (Cross-Entropy)** | 0.3838 | 0.6856 | **0.5963** | **Random Forest (-13.0%)** |
+| **Tuned Decision Threshold** | 0.50 | 0.40 | 0.30 | Tuned on validation split |
 
-*Key Findings:* The evaluation highlights a fundamental architectural trade-off in computational advertising. **Logistic Regression achieved higher discriminative ranking power (ROC-AUC 0.5946 vs. 0.5832)** due to smooth linear hyperplanes over behavioral aggregates. However, **Random Forest achieved superior probability calibration (Log-Loss 0.3791 vs. 0.3825)**. In commercial auction engines, lower Log-Loss is critical because bid allocation depends directly on calibrated click probability rather than relative ranking alone.
+*Key Findings:* The evaluation highlights a fundamental architectural trade-off in computational advertising. While Logistic Regression achieved slightly higher recall (0.9593 vs. 0.9259), **Random Forest achieved superior probability calibration (Log-Loss 0.5963 vs. 0.6856)** and higher F1 (0.2433). In commercial auction engines, lower Log-Loss is critical because bid allocation depends directly on calibrated click probability rather than relative ranking alone.
 
 ---
 
 #### 5.4.5 Cluster Scalability and Amdahl's Law Speedup Analysis
-To analyze parallel cluster scaling characteristics, a distributed multi-stage aggregation and wide-shuffle workload was benchmarked across partition configurations ($p \in \{1, 2, 4, 8\}$).
+To analyze parallel cluster scaling characteristics under Amdahl's Law, an aggregation workload on 15,000 records was benchmarked across partition configurations ($p \in \{1, 2, 4, 8\}$) with three statistical replications ($N=3$).
 
-**Table 9: Multi-Partition Cluster Scalability Benchmark**
+**Table 9: 3-Repetition Controlled Partition Scalability Benchmark**
 
-| Partition Count ($p$) | Execution Runtime $T_p$ (s) | Measured Speedup ($S_p = T_1 / T_p$) | Parallel Efficiency ($E_p = S_p / p$) | Stage Throughput (Rows/s) |
+| Partition Count ($p$) | Mean Execution Time $\bar{T}_p$ (s) | Sample Std Dev $\sigma_p$ (s) | Measured Speedup ($S_p = \bar{T}_1 / \bar{T}_p$) | Parallel Efficiency ($E_p = S_p / p$) |
 | :---: | :---: | :---: | :---: | :---: |
-| **1** | 0.4513 | **1.000×** | **100.0%** | 53.2 |
-| **2** | 0.4698 | 0.961× | 48.0% | 51.1 |
-| **4** | **0.3001** | **1.504×** | **37.6%** | **80.0** |
-| **8** | 0.3453 | 1.307× | 16.3% | 69.5 |
+| **1** | **0.0849 s** | $\pm 0.0222$ s | **1.000×** | **100.0%** |
+| **2** | 0.1311 s | $\pm 0.0378$ s | 0.648× | 32.4% |
+| **4** | 0.1000 s | $\pm 0.0126$ s | 0.849× | 21.2% |
+| **8** | 0.1305 s | $\pm 0.0111$ s | 0.651× | 8.1% |
 
 *Key Findings:* The empirical scalability profile illustrates the exact trade-offs predicted by distributed computing theory:
-1. Transitioning from $p=1$ to $p=4$ partitions reduced execution time from $0.4513\text{s}$ to $0.3001\text{s}$, yielding an empirical **speedup of 1.504×** and boosting throughput to 80.0 rows/second.
-2. Increasing partitions from $p=4$ to $p=8$ reversed scalability gains, increasing runtime to $0.3453\text{s}$ and depressing efficiency to $16.3\%$. On moderate dataset sizes (30,000–50,000 rows), excessive partitioning fragments RDD blocks into small payloads, causing JVM thread-switching latency, inter-partition shuffle handshakes, and scheduling overhead to outweigh parallel compute gains. This confirms $p=4$ as the optimal partition sweet spot for this executor configuration.
+1. For in-memory datasets of $\sim 15,000$ rows, the task execution time ($\approx 10$–$20$ ms) is comparable to the Spark scheduler's fixed overhead ($\sim 15$–$30$ ms for task packaging, thread dispatch, and shuffle merge).
+2. As predicted by Amdahl's Law, increasing partition counts introduces micro-task fragmentation, causing single-partition in-memory scans to exhibit higher efficiency on fine-grained workloads. When scaling to enterprise data volumes ($> 10^7$ rows), the compute time dominates scheduling overhead, restoring linear speedup.
 
 ---
 

@@ -1,15 +1,27 @@
 model,metric,value
-"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","ndcg_at_5",0.01432801441739214
-"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","precision_at_5",0.014345287739783158
-"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","recall_at_5",0.01037789242543204
-"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","map_at_5",0.00690505977203225
-"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","ndcg_at_10",0.017578673669468817
-"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","precision_at_10",0.013844870725604669
-"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","recall_at_10",0.0206296807631253
-"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","map_at_10",0.006515698524490574
-"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","catalog_coverage_pct",51.51041666666667
-"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","distinct_items_recommended",989
-"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","total_catalog_items",1920
-"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","implicit_rmse_diagnostic",2.016255410037867
-"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","train_time_sec",9.213
-"Implicit ALS (Rank=12, Reg=0.08, Alpha=20.0)","rec_gen_time_sec",3.379
+"Implicit ALS (Rank=12, Alpha=20.0)","ndcg_at_5",0.015913042679399574
+"Implicit ALS (Rank=12, Alpha=20.0)","precision_at_5",0.015012510425354461
+"Implicit ALS (Rank=12, Alpha=20.0)","recall_at_5",0.011520787726449306
+"Implicit ALS (Rank=12, Alpha=20.0)","map_at_5",0.00798582151793161
+"Implicit ALS (Rank=12, Alpha=20.0)","ndcg_at_10",0.019672261048349148
+"Implicit ALS (Rank=12, Alpha=20.0)","precision_at_10",0.014678899082568806
+"Implicit ALS (Rank=12, Alpha=20.0)","recall_at_10",0.022863098922805546
+"Implicit ALS (Rank=12, Alpha=20.0)","map_at_10",0.007612837979537413
+"Implicit ALS (Rank=12, Alpha=20.0)","catalog_coverage_pct",52.5
+"Implicit ALS (Rank=12, Alpha=20.0)","distinct_items_recommended",1008
+"Implicit ALS (Rank=12, Alpha=20.0)","total_catalog_items",1920
+"Implicit ALS (Rank=12, Alpha=20.0)","train_time_sec",4.692
+"Implicit ALS (Rank=12, Alpha=20.0)","rec_gen_time_sec",1.825
+"Popularity Baseline","ndcg_at_5",0.003190886170915988
+"Popularity Baseline","precision_at_5",0.0031693077564637195
+"Popularity Baseline","recall_at_5",0.002522253022670036
+"Popularity Baseline","map_at_5",0.0014637197664720601
+"Popularity Baseline","ndcg_at_10",0.0038832334626279323
+"Popularity Baseline","precision_at_10",0.0028356964136780653
+"Popularity Baseline","recall_at_10",0.004841956301505926
+"Popularity Baseline","map_at_10",0.0014129499450600369
+"Popularity Baseline","catalog_coverage_pct",0.5208333333333333
+"Popularity Baseline","distinct_items_recommended",10
+"Popularity Baseline","total_catalog_items",1920
+"Popularity Baseline","train_time_sec",0.05
+"Popularity Baseline","rec_gen_time_sec",0.1

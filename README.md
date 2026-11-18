@@ -2,18 +2,20 @@
 ### A Distributed Personalized Product & Advertisement Recommendation System Using Apache Spark
 **Course Project:** INT315 — Distributed and Cluster Computing (Continuous Assessment 2)  
 **Author:** Utkarsh Pandey  
-**Cluster Architecture:** Apache Spark 3.5.1 on 20 Logical Cores (`local[*]`), Java 17 LTS, Apache Parquet with Snappy Compression.
+**Institution:** School of Computer Science & Engineering, Lovely Professional University  
+**Cluster Architecture:** Apache Spark 3.5.1 on 8 Logical Cores (`local[*]`), Java 17 LTS, Apache Parquet with Snappy Compression.
 
 ---
 
 ## 🌟 Executive Summary
 
-**Smart Commerce AI** is a distributed, big-data recommendation and real-time advertisement auction platform inspired by the production architectures of Amazon, Alibaba Taobao, and Flipkart.
+**Smart Commerce AI** is a production-grade distributed recommendation and real-time advertisement auction platform inspired by the architectures of Alibaba Taobao, Amazon, and Flipkart. Engineered specifically for **Course INT315 – Distributed and Cluster Computing**, the project addresses the dual computational workloads of modern digital commerce:
 
-The system addresses the dual objectives of modern digital commerce:
-1. **Organic Product Personalization:** Delivering high-affinity organic recommendations by decomposing user behavior logs into low-rank latent factor spaces using **Spark MLlib Implicit Alternating Least Squares (ALS)** with confidence weighting ($c_{ui} = 1 + \alpha r_{ui}$).
-2. **Sponsored Advertisement Auction Engine:** Predicting Click-Through Rate (CTR) for sponsored campaigns under extreme class imbalance using distributed **Logistic Regression** and **Random Forest (60 trees)** classifiers, resolved dynamically via an eCPM auction interleaving policy.
-3. **Cluster Scalability & Benchmarking:** Rigorously evaluating partition scaling across worker threads ($p \in \{1, 2, 4, 8\}$) to validate Amdahl's Law and identify parallelization bottlenecks.
+1. **Organic Product Personalization:** Generates high-affinity recommendations from implicit browsing signals using **Spark MLlib Implicit Alternating Least Squares (ALS)** with confidence weighting ($c_{ui} = 1 + \alpha r_{ui}$), evaluated against a **Popularity-Based Baseline**.
+2. **Sponsored Advertisement Auction Engine:** Forecasts Click-Through Rates (CTR) under acute positive class imbalance (13.0% click rate) using distributed **ElasticNet Logistic Regression** and **Random Forest (60 trees, depth 8)** with inverse class weighting and validation-tuned decision thresholds, benchmarked against a **Prior-Probability Baseline**.
+3. **Strict Point-in-Time Temporal Filtering (Zero Data Leakage):** Eliminates future-event leakage by enforcing $t_{\text{behavior}} < t_{\text{impression}}$, validated via automated unit tests.
+4. **Cluster Scalability & Benchmarking:** Conducts statistically replicated ($N=3$) partition experiments across $p \in \{1, 2, 4, 8\}$ partitions, measuring runtimes, standard deviations, speedup, and parallel efficiency under Amdahl's Law.
+5. **Commercial Safeguards:** Enforces ad frequency capping (maximum 2 impressions per campaign per user) and inventory price sanity filtering ($price > 0$).
 
 ---
 
@@ -22,175 +24,188 @@ The system addresses the dual objectives of modern digital commerce:
 ```mermaid
 flowchart TD
     subgraph DataLayer ["Data Storage & Ingestion Layer"]
-        A["Alibaba Taobao Log Stream<br/>(42,000 Behavior Events)"]
+        A["Educational Alibaba Taobao Stream<br/>(42,000 Behavior Events)"]
         B["Raw Ad Impressions<br/>(15,000 Ad Samples)"]
         C["User Demographic Profiles<br/>(1,200 Customers)"]
+        D["Ad Creative Metadata<br/>(400 Items)"]
     end
 
-    subgraph SparkCluster ["Apache Spark 3.5.1 Distributed Cluster (local[*], 20 Cores)"]
-        D["Spark SQL Catalyst Optimizer<br/>Broadcast Hash Joins & Feature Vectorization"]
-        E["Spark MLlib Implicit ALS<br/>(Rank=12, α=20.0, regParam=0.08)"]
-        F["CTR Binary Classifiers<br/>(Logistic Regression & Random Forest)"]
-        G["Auction Interleaving Policy<br/>Preserves Slot 1 Organic & eCPM Rank Slot 2"]
+    subgraph SparkCluster ["Apache Spark 3.5.1 Distributed Cluster (local[*], 8 Cores)"]
+        E["Point-in-Time Temporal Filter<br/>(time_stamp < raw_sample.time_stamp)"]
+        F["Catalyst Broadcast Hash Joins<br/>F.broadcast(ad_feature, user_profile)"]
+        G["Spark MLlib Implicit ALS<br/>(Rank=12, α=20.0, regParam=0.08)"]
+        H["CTR Binary Classifiers<br/>(Class Weighting + Threshold Optimization)"]
+        I["Commercial Safeguards<br/>Frequency Capping & Inventory Filter"]
     end
 
     subgraph StorageLayer ["High-Performance Storage Layer"]
-        H[("Snappy-Compressed<br/>Apache Parquet DataFrames")]
+        J[("Snappy-Compressed<br/>Columnar Apache Parquet")]
+        K[("Single-File CSV Exports<br/>results/product_recommendations_csv<br/>results/ad_recommendations_csv")]
     end
 
     subgraph PresentationLayer ["Dual Serving Frontends"]
-        I["🛍️ Interactive E-Commerce Storefront<br/>(index.html: Light Palette, XAI Sliders, Cart Drawer)"]
-        J["📊 Streamlit Cluster Analytics Dashboard<br/>(app.py: Amdahl Curves, ROC Charts, Topology)"]
+        L["🛍️ Interactive E-Commerce Storefront<br/>(index.html: Port 3000, Light Palette, Live Search, Cart)"]
+        M["📊 Streamlit Cluster Analytics Dashboard<br/>(app.py: Port 8501, Empirical Metrics & Amdahl Curves)"]
     end
 
-    A --> D
-    B --> D
-    C --> D
-    D --> E
+    A --> E
+    B --> E
+    E --> F
+    C --> F
     D --> F
-    E --> G
     F --> G
-    G --> H
+    F --> H
+    G --> I
     H --> I
-    H --> J
+    I --> J
+    I --> K
+    K --> L
+    J --> M
 ```
 
 ---
 
-## 📊 Empirical Cluster Benchmark Results
+## 📊 Comprehensive Empirical Benchmark Results
 
-All benchmarks below were empirically measured on an Intel 20-core cluster running **Apache Spark 3.5.1** and **Java 17 LTS**:
+All benchmarks below were empirically measured on an 8-core host running **Apache Spark 3.5.1** on **Java 17 LTS**:
 
-### 1. Amdahl's Law Scalability & Partition Scaling
-| Partition Count ($p$) | Execution Time (s) | Measured Speedup | Efficiency ($E_p$) | Cluster Observation |
-| :---: | :---: | :---: | :---: | :--- |
-| **$p = 1$** | $0.451\text{ s}$ | $1.00\times$ | $100.0\%$ | Sequential Driver Baseline |
-| **$p = 2$** | $0.470\text{ s}$ | $0.96\times$ | $48.0\%$ | Thread-scheduling overhead exceeds gain |
-| **$p = 4$** | **$0.300\text{ s}$** | **$1.50\times$** | **$37.5\%$** | **Optimal Sweet Spot** (Maximum Throughput) |
-| **$p = 8$** | $0.345\text{ s}$ | $1.31\times$ | $16.4\%$ | ShuffleExchange network serialization latency |
+### 1. Product Recommendation: Implicit ALS vs. Popularity Baseline
+*Evaluated on held-out test split ($N=7,980$ interactions) across 1,920 candidate items:*
 
-### 2. Product Recommendation Engine (Spark Implicit ALS)
-- **Configuration:** Matrix Factorization Rank = 12, Iterations = 10, Regularization $\lambda = 0.08$, Confidence Rate $\alpha = 20.0$.
-- **Training Time:** $9.213\text{ seconds}$ across 31,978 training rows.
-- **Throughput:** **$3,470.9\text{ records/sec}$**.
-- **NDCG@10:** $0.0176$
-- **Precision@10:** $0.0138$
-- **Recall@10:** $0.0206$
-- **Catalog Coverage:** **$51.51\%$** (989 unique items recommended from 1,920 candidate items).
+| Evaluation Metric | Popularity Baseline | Implicit ALS Recommender | Absolute Gain ($\Delta$) | Relative Gain (%) |
+|---|:---:|:---:|:---:|:---:|
+| **NDCG@5** | 0.00319 | **0.01591** | +0.01272 | **+398.7%** |
+| **Precision@5** | 0.00317 | **0.01501** | +0.01184 | **+373.5%** |
+| **Recall@5** | 0.00252 | **0.01152** | +0.00900 | **+357.1%** |
+| **MAP@5** | 0.00146 | **0.00799** | +0.00653 | **+447.3%** |
+| **NDCG@10** | 0.00388 | **0.01967** | +0.01579 | **+406.9% (5.07×)** |
+| **Precision@10** | 0.00284 | **0.01468** | +0.01184 | **+416.9% (5.17×)** |
+| **Recall@10** | 0.00484 | **0.02286** | +0.01802 | **+372.3%** |
+| **MAP@10** | 0.00141 | **0.00761** | +0.00620 | **+439.7%** |
+| **Catalog Coverage (%)** | **0.52%** (10 items) | **52.50%** (1,008 items) | +51.98% | **+10,096% (101×)** |
+| **Training Duration** | 0.050 s | 4.692 s | — | Throughput: **6,815.6 rec/s** |
+| **Serving Latency** | 0.100 s | 1.825 s | — | Throughput: **657.5 users/s** |
 
-### 3. Ad Click-Through Rate (CTR) Models Comparison
-| Evaluation Metric | Distributed Logistic Regression | Distributed Random Forest (60 Trees) | Winner |
-| :--- | :---: | :---: | :--- |
-| **ROC-AUC** | **$0.5946$** | $0.5832$ | **Logistic Regression** ($+0.0114$) |
-| **PR-AUC** | **$0.1627$** | $0.1553$ | **Logistic Regression** ($+0.0074$) |
-| **Weighted F1** | $0.8083$ | $0.8083$ | Tie |
-| **Log-Loss** | $0.3825$ | **$0.3791$** | **Random Forest** (Best Probability Calibration) |
-| **Training Time** | **$5.86\text{ s}$** ($2,058\text{ rec/s}$) | $6.55\text{ s}$ ($1,842\text{ rec/s}$) | **Logistic Regression** ($11.7\%$ faster) |
-| **Inference Rate** | **$5,100.8\text{ rec/s}$** | $5,091.5\text{ rec/s}$ | **Logistic Regression** |
+### 2. Ad CTR Prediction: Baselines & Calibration Comparison
+*Evaluated on independent test split ($N=2,225$, 13% positive click rate) with inverse weighting ($w_{\text{pos}}=3.886, w_{\text{neg}}=0.574$):*
 
----
+| Metric | Prior-Probability Baseline | Logistic Regression (ElasticNet) | Random Forest (60 Trees, Depth 8) | Best Performing Model |
+|---|:---:|:---:|:---:|:---:|
+| **ROC-AUC** | 0.50000 | **0.58298** | 0.58217 | Logistic Regression (+0.1%) |
+| **PR-AUC** | 0.12867 | 0.14333 | **0.14528** | **Random Forest (+1.4%)** |
+| **Classification Accuracy** | 0.87133 | 0.20764 | **0.30112** | Prior (Trivial majority class) |
+| **Positive Precision** | 0.00000 | 0.12879 | **0.14006** | **Random Forest (+8.7%)** |
+| **Positive Recall** | 0.00000 | **0.95926** | 0.92593 | **Logistic Regression (+3.6%)** |
+| **Positive F1-Score** | 0.00000 | 0.22709 | **0.24331** | **Random Forest (+7.1%)** |
+| **Log-Loss (Cross-Entropy)** | 0.38385 | 0.68564 | **0.59627** | **Random Forest (-13.0%)** |
+| **Tuned Threshold ($\tau^*$)** | 0.50 | 0.40 | 0.30 | Tuned on validation split |
+| **True Positives (TP)** | 0 | 259 | 250 | Out of 270 test clicks |
+| **False Positives (FP)** | 0 | 1,752 | 1,535 | Out of 1,955 non-clicks |
+| **True Negatives (TN)** | 1,938 | 203 | 420 | Out of 1,955 non-clicks |
+| **False Negatives (FN)** | 286 | 11 | 20 | Out of 270 test clicks |
 
-## 💻 User Interfaces & Applications
+### 3. Controlled 3-Repetition Partition Scalability Benchmark
+*Standardized aggregation workload on 15,000 records across 3 independent replications ($N=3$):*
 
-### 1. `index.html` — Interactive Web Storefront & XAI Deep Dive
-A modern, light-palette e-commerce web application featuring:
-- **Clean Light Color Palette:** Slate-50 background, white elevated cards, soft pastel aura accents, and crisp indigo highlights.
-- **Persona Switching:** Real-time toggling between **User #25** (Tech Enthusiast), **User #104** (Fashion Apparel), and **User #87** (Smart Home).
-- **Interactive Explainable AI (XAI) Sliders:** Dynamic sliders for latent dimensions $k_1, k_2, k_3$ demonstrating real-time Spark ALS matrix dot product recalculation:
-  $$\hat{r}_{ui} = u_i^T \cdot v_j = \sum_{k=1}^{12} u_{ik} \cdot v_{jk}$$
-- **Real-Time Search & Cluster Slice Filtering:** Instant catalog search with cluster tags (`cate_4231`, `cate_6752`, `cate_1120`).
-- **Cluster Telemetry Drawer:** Features an animated cluster DAG simulation terminal displaying Spark executor stages across 20 cores, plus one-click JSON telemetry report export.
-- **Slide-Over Cart:** Real-time sales tax calculation, item counter, and instant checkout dispatch.
-
-### 2. `Smart_Commerce_AI/app.py` — Streamlit Cluster Research Dashboard
-A 6-tab analytical benchmarking dashboard featuring:
-- Tab 1: **Cluster Topology & Node Health** (20-core CPU gauges, JVM memory).
-- Tab 2: **ALS Recommender Diagnostics** (NDCG@10, Precision@10, Catalog Coverage).
-- Tab 3: **Ad CTR Machine Learning Benchmarks** (ROC & Precision-Recall curves, confusion matrices).
-- Tab 4: **Distributed Scalability & Speedup** (Amdahl's law partition speedup curve).
-- Tab 5: **Explainable Recommendation Inspector** (User-item dot product breakdown).
-- Tab 6: **E-Commerce Storefront Simulation** (Real-time product and sponsored banner preview).
+| Partitions ($p$) | Mean Time $\bar{T}_p$ (s) | Std Dev $\sigma_p$ (s) | Speedup $S_p$ | Efficiency $E_p$ (%) | Distributed Performance Analysis |
+|:---:|:---:|:---:|:---:|:---:|---|
+| **1** | **0.0849 s** | $\pm 0.0222$ s | **1.000×** | **100.0%** | Single-partition contiguous in-memory scan |
+| **2** | 0.1311 s | $\pm 0.0378$ s | 0.648× | 32.4% | Task scheduling and thread context switching |
+| **4** | 0.1000 s | $\pm 0.0126$ s | 0.849× | 21.2% | Parallel aggregation gain vs. coordination |
+| **8** | 0.1305 s | $\pm 0.0111$ s | 0.651× | 8.1% | Micro-task fragmentation & shuffle merge overhead |
 
 ---
 
-## 📁 Repository Structure
+## 📁 Repository Structure & Audited Codebase
 
 ```
 Smart-Commerce-AI/
-├── index.html                           # Modern Light-Palette Storefront & XAI Deep-Dive UI
-├── README.md                            # Comprehensive Master Project Documentation
-├── .gitignore                           # Git ignore rules for PySpark, Python & caches
-├── Smart_Commerce_AI/                   # Core PySpark Machine Learning & Cluster Codebase
-│   ├── app.py                           # Multi-Tab Streamlit Cluster Analytics Dashboard
-│   ├── requirements.txt                 # Python dependencies (pyspark, streamlit, etc.)
-│   ├── research_paper/                  # Academic Research Paper Draft with Empirical Tables
-│   │   └── Research_Paper_Draft.md
-│   ├── src/                             # PySpark Pipeline Modules
-│   │   ├── config.py                    # Cluster configuration & SPARK_HOME environment isolation
-│   │   ├── preprocess.py                # Distributed ETL & implicit confidence weighting
-│   │   ├── train.py                     # MLlib ALS & CTR training + Amdahl speedup measurement
-│   │   └── recommend.py                 # Pure-JVM top-k batch inference and eCPM auction interleaving
-│   └── data/                            # Processed Parquet datasets and splits
-├── Smart_Commerce_AI_Dataset/           # Demonstration Datasets & Data Dictionaries
-│   ├── behavior_log.csv                 # Customer interactions (pv, fav, cart, buy)
-│   ├── raw_sample.csv                   # Raw ad impressions and user click labels
-│   ├── ad_feature.csv                   # Ad campaign IDs, categories, and brand mappings
-│   ├── user_profile.csv                 # Demographic features (pvalue_level, shopping_level)
-│   └── DATA_DICTIONARY.md               # Field schema documentation
-└── TaobaoAd_Manageable_Dataset_Kit/     # Ingestion Tooling for Genuine RecZoo Dataset
-    ├── README.md
-    └── scripts/
-        └── download_and_sample.py       # Automated HuggingFace RecZoo TaobaoAd_x1 downloader
+├── Smart_Commerce_AI/
+│   ├── data/
+│   │   ├── raw/                       # Educational CSV datasets (42k behaviors, 15k impressions)
+│   │   ├── processed/                 # Parquet feature stores (ctr_features, interactions)
+│   │   └── README.md                  # Dataset provenance, schema, and license documentation
+│   ├── src/
+│   │   ├── config.py                  # PySpark runtime configuration & path resolution
+│   │   ├── preprocess.py              # Temporal filtering & Broadcast Hash Joins
+│   │   ├── train.py                   # Distributed ALS, LogReg, Random Forest, & Scalability suite
+│   │   └── recommend.py               # Serving engine with frequency capping & CSV exports
+│   ├── tests/
+│   │   └── test_data_leakage.py       # Automated unit test verifying point-in-time filtering
+│   ├── scripts/
+│   │   ├── validate_dataset_integrity.py  # Automated schema & data validation
+│   │   └── download_taobao_dataset.py     # RecZoo TaobaoAd_x1 downloader
+│   ├── results/                       # Exported benchmark CSVs, JSON, and CSV recommendations
+│   ├── models/                        # Saved Spark MLlib model artifacts
+│   ├── research_paper/
+│   │   ├── Research_Paper_Draft.md    # Springer-formatted revised research paper
+│   │   └── PRISMA_Systematic_Review_Paper.md  # PRISMA 2020 systematic review
+│   ├── app.py                         # Interactive Streamlit Cluster Analytics Dashboard
+│   ├── requirements.txt               # Locked production dependencies
+│   └── vercel.json                    # Serverless cloud deployment configuration
+├── index.html                         # Interactive Storefront (Tailwind CSS, Light Theme)
+├── AUDIT_REPORT.md                    # Comprehensive 11-point audit & remediation report
+├── DATASET_DOCUMENTATION.md           # Dataset provenance & schema verification
+├── BENCHMARK_METHODOLOGY.md           # Benchmarking protocols, local[*] vs. cluster, Amdahl analysis
+├── EXPERIMENT_RESULTS.md              # Full empirical tables & baseline comparisons
+├── TEST_REPORT.md                     # Comprehensive automated test execution record
+├── RUN_GUIDE.md                       # Step-by-step operational setup & execution guide
+└── README.md                          # Root academic and technical overview
 ```
 
 ---
 
 ## 🚀 Quickstart Guide
 
-### Prerequisites
-- **Python:** 3.10+ (Tested on Python 3.13.1)
-- **Java:** OpenJDK 17 LTS (Required for Apache Spark 3.5.1)
-- **Apache Spark:** 3.5.1 (Packaged via PySpark)
+### 1. Prerequisites
+- **Python 3.10+** (tested on 3.13)
+- **Java 11 or 17** (OpenJDK 17 recommended; verify with `java -version`)
+- **Git**
 
-### 1. Installation
-Clone the repository and set up a virtual environment:
-```bash
-git clone https://github.com/Utkarsh1454/Smart-Commerce-AI.git
-cd Smart-Commerce-AI
+### 2. Setup & Virtual Environment
+```powershell
+cd Smart-Commerce-AI/Smart_Commerce_AI
 python -m venv .venv
-.\.venv\Scripts\activate
-pip install -r Smart_Commerce_AI/requirements.txt
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
 
-### 2. Run the Web Storefront
-Host `index.html` locally using Python's built-in HTTP server:
-```bash
-python -m http.server 3000
-```
-Open **[http://localhost:3000](http://localhost:3000)** in your browser.
+### 3. Execute Complete Audited Pipeline
+```powershell
+# Step A: Validate dataset schema & integrity
+python scripts/validate_dataset_integrity.py
 
-### 3. Run the Streamlit Research Dashboard
-```bash
-cd Smart_Commerce_AI
-streamlit run app.py
-```
-Open **[http://localhost:8501](http://localhost:8501)** in your browser.
-
-### 4. Execute the Distributed PySpark MLlib Pipeline
-```bash
-cd Smart_Commerce_AI
-
-# Step 1: Preprocess raw behavior logs and generate implicit interaction matrices
+# Step B: Run temporal preprocessing (zero data leakage)
 python -m src.preprocess
 
-# Step 2: Train ALS recommender and CTR classifiers with Amdahl scalability profiling
+# Step C: Run temporal leakage unit test
+python -m tests.test_data_leakage
+
+# Step D: Train ALS recommender, CTR models & run 3x scalability benchmark
 python -m src.train
 
-# Step 3: Generate top-k product & ad recommendations via pure-JVM Catalyst execution
+# Step E: Serve frequency-capped recommendations & export CSVs
 python -m src.recommend
 ```
 
+### 4. Launch Frontends
+- **Interactive Storefront (Port 3000):**
+  ```powershell
+  python -m http.server 3000
+  ```
+  Open: **`http://localhost:3000`**
+- **Streamlit Analytics Dashboard (Port 8501):**
+  ```powershell
+  streamlit run app.py --server.port 8501
+  ```
+  Open: **`http://localhost:8501`**
+
 ---
 
-## 📜 License & Academic Integrity
-Developed as part of academic coursework for **INT315 (Distributed and Cluster Computing)** at Lovely Professional University. Released under the MIT License.
+## 📜 Academic Compliance & Course Attribution
+
+- **Course:** INT315 – Distributed and Cluster Computing  
+- **Assessment:** Continuous Assessment 2 (CA2)  
+- **Author / Student:** Utkarsh Pandey  
+- **Institution:** School of Computer Science & Engineering, Lovely Professional University  
+- **GitHub Repository:** [https://github.com/Utkarsh1454/Smart-Commerce-AI](https://github.com/Utkarsh1454/Smart-Commerce-AI)

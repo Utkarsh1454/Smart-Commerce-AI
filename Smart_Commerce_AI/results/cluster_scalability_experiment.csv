@@ -1,5 +1,5 @@
-partitions,execution_time_sec,speedup,efficiency_pct
-1,0.4513,1.0,100.0
-2,0.4698,0.961,48.0
-4,0.3001,1.504,37.6
-8,0.3453,1.307,16.3
+partitions,mean_execution_time_sec,std_dev_sec,speedup,efficiency_pct
+1,0.0849,0.0222,1.0,100.0
+2,0.1311,0.0378,0.648,32.4
+4,0.1,0.0126,0.849,21.2
+8,0.1305,0.0111,0.651,8.1

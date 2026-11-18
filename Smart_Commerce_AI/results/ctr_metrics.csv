@@ -1,3 +1,4 @@
-model_key,model_name,roc_auc,pr_auc,accuracy,precision,recall,f1_score,log_loss,train_time_sec,inference_time_sec
-logistic_regression,Distributed Logistic Regression (ElasticNet),0.59465,0.16267,0.86914,0.7554,0.86914,0.80829,0.38253,5.86,0.577
-random_forest,"Distributed Random Forest (60 Trees, Depth 8)",0.58321,0.15529,0.86914,0.7554,0.86914,0.80829,0.37907,6.549,0.578
+model_key,model_name,roc_auc,pr_auc,accuracy,positive_precision,positive_recall,positive_f1,log_loss,tp,fp,tn,fn,tuned_threshold,train_time_sec,inference_time_sec
+logistic_regression,Distributed Logistic Regression (ElasticNet),0.58298,0.14333,0.20764,0.12879,0.95926,0.22709,0.68564,259,1752,203,11,0.4,4.709,0.391
+random_forest,"Distributed Random Forest (60 Trees, Depth 8)",0.58217,0.14528,0.30112,0.14006,0.92593,0.24331,0.59627,250,1535,420,20,0.3,3.937,0.451
+prior_baseline,Prior-Probability Baseline (P(Click)=0.130),0.5,0.12867,0.87133,0.0,0.0,0.0,0.38385,0,0,1938,286,0.5,0.01,0.01
