@@ -1,0 +1,11 @@
+# Ignore virtual environments and caches
+.venv/
+venv/
+__pycache__/
+*.pyc
+metastore_db/
+spark-warehouse/
+*.parquet.crc
+*.csv.crc
+.*.crc
+.crc/
