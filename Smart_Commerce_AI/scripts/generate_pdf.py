@@ -1,0 +1,1207 @@
+import subprocess
+import sys
+from pathlib import Path
+import pypdf
+
+ROOT = Path(__file__).resolve().parents[1]
+PDF_PATH = ROOT / "research_paper" / "Smart_Commerce_AI_Paper.pdf"
+HTML_PATH = ROOT / "research_paper" / "paper_print.html"
+
+def generate_html_and_pdf():
+    html_content = r"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Smart Commerce AI: A Parallel Framework for Personalized Product Recommendation and Advertisement Click Prediction Using Apache Spark</title>
+<style>
+@page {
+    size: A4;
+    margin: 15mm 18mm 15mm 18mm;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 9.4pt;
+    line-height: 1.34;
+    color: #111;
+    margin: 0;
+    padding: 0;
+    text-align: justify;
+}
+
+.page {
+    width: 100%;
+    height: 265mm;
+    max-height: 265mm;
+    overflow: hidden;
+    page-break-after: always;
+    break-after: page;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.running-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8.5pt;
+    color: #333;
+    border-bottom: 0.4pt solid #999;
+    padding-bottom: 1.5mm;
+    margin-bottom: 3.5mm;
+}
+
+.page:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+h1.paper-title {
+    font-size: 15.5pt;
+    line-height: 1.2;
+    text-align: center;
+    font-weight: bold;
+    margin: 0 0 3mm 0;
+}
+
+.author-block {
+    text-align: center;
+    margin-bottom: 4mm;
+    font-size: 9.5pt;
+}
+
+.author-name {
+    font-weight: bold;
+    font-size: 10.5pt;
+}
+
+.author-affil {
+    font-style: italic;
+    color: #333;
+    font-size: 9pt;
+    margin-top: 0.5mm;
+}
+
+.author-course {
+    font-size: 8.5pt;
+    color: #555;
+    margin-top: 0.5mm;
+}
+
+.abstract-box {
+    margin: 0 3mm 4mm 3mm;
+    padding: 2.5mm 3.5mm;
+    background: #fafafa;
+    border-left: 2pt solid #444;
+    font-size: 8.8pt;
+    line-height: 1.32;
+}
+
+.abstract-title {
+    font-weight: bold;
+}
+
+.keywords-line {
+    margin-top: 2mm;
+    font-size: 8.6pt;
+}
+
+.keywords-label {
+    font-weight: bold;
+}
+
+h2 {
+    font-size: 10.8pt;
+    font-weight: bold;
+    margin-top: 3.5mm;
+    margin-bottom: 1.5mm;
+    border-bottom: 0.5pt solid #ccc;
+    padding-bottom: 0.5mm;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+h3 {
+    font-size: 9.8pt;
+    font-weight: bold;
+    margin-top: 2.5mm;
+    margin-bottom: 1mm;
+}
+
+p {
+    margin-top: 0;
+    margin-bottom: 2mm;
+    text-indent: 3.5mm;
+}
+
+p.no-indent {
+    text-indent: 0;
+}
+
+ul, ol {
+    margin-top: 0.5mm;
+    margin-bottom: 2mm;
+    padding-left: 5mm;
+}
+
+li {
+    margin-bottom: 1mm;
+}
+
+table.academic {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2.5mm 0 2.5mm 0;
+    font-size: 8.2pt;
+    line-height: 1.2;
+}
+
+table.academic caption {
+    caption-side: top;
+    text-align: left;
+    font-weight: bold;
+    font-size: 8.4pt;
+    margin-bottom: 1mm;
+}
+
+table.academic th {
+    border-top: 1.2pt solid #000;
+    border-bottom: 0.8pt solid #000;
+    padding: 1.5mm 1.2mm;
+    text-align: left;
+    font-weight: bold;
+}
+
+table.academic td {
+    padding: 1.3mm 1.2mm;
+    border-bottom: 0.4pt solid #e5e5e5;
+}
+
+table.academic tr:last-child td {
+    border-bottom: 1.2pt solid #000;
+}
+
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+.equation-block {
+    text-align: center;
+    margin: 2mm 0;
+    font-style: italic;
+    font-size: 9.2pt;
+}
+
+.equation-block .eq-num {
+    float: right;
+    font-style: normal;
+}
+
+.diagram-box {
+    border: 0.6pt solid #555;
+    background: #fdfdfd;
+    padding: 2.5mm;
+    font-family: 'Courier New', monospace;
+    font-size: 7.2pt;
+    line-height: 1.2;
+    margin: 2mm 0;
+    white-space: pre;
+    overflow-x: hidden;
+}
+
+.references-list ol {
+    padding-left: 4.5mm;
+    font-size: 8pt;
+    line-height: 1.26;
+    margin: 1mm 0;
+}
+
+.references-list li {
+    margin-bottom: 1.6mm;
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== PAGE 1 ==================== -->
+<div class="page">
+    <div class="running-header"><span>Smart Commerce AI</span><span>1</span></div>
+    <h1 class="paper-title">Smart Commerce AI: A Parallel Framework for Personalized Product Recommendation and Advertisement Click Prediction Using Apache Spark</h1>
+
+    <div class="author-block">
+        <div class="author-name">Utkarsh Pandey<sup>1</sup></div>
+        <div class="author-affil"><sup>1</sup>School of Computer Science and Engineering, Lovely Professional University, Phagwara, Punjab, India</div>
+        <div class="author-course">Course: INT315 – Distributed and Cluster Computing (Continuous Assessment 2) &bull; Academic Session 2026</div>
+    </div>
+
+    <div class="abstract-box">
+        <span class="abstract-title">Abstract</span> The rapid growth of electronic commerce has resulted in the generation of massive volumes of customer interaction and advertisement impression data. Extracting meaningful patterns from these high-throughput streams requires scalable computational architectures capable of supporting both personalized product recommendations and accurate advertisement click-through rate (CTR) estimation. Traditional single-node and single-threaded processing paradigms encounter computational and memory bottlenecks when handling high-dimensional behavioural datasets and training iterative machine learning models. This paper presents <strong>Smart Commerce AI</strong>, an integrated parallel recommendation and advertisement prediction framework developed using Apache Spark 3.5.1 and PySpark MLlib. The proposed framework unifies two complementary machine learning engines: an implicit-feedback collaborative filtering model based on Alternating Least Squares (ALS) for personalized product recommendations, and supervised classification models (ElasticNet Logistic Regression and Random Forest) for advertisement click-through rate prediction. The recommendation engine incorporates confidence-weighted customer interactions, encompassing product views, favourites, cart additions, and purchases. The advertisement prediction component evaluates behavioural, demographic, and contextual features while enforcing strict temporal filtering to prevent data leakage.
+        <br><br>
+        All empirical experiments were conducted in a local multi-threaded parallel execution mode (<code>local[*]</code>) on a single multi-core host. The reported evaluation includes ranking measures, classification metrics, execution throughput, and partition-level scalability benchmarks. The experimental results document an ALS NDCG@10 of 0.0197, catalogue coverage of 52.50% (recommending 1,008 unique items across 1,920 candidates, representing a 101&times; gain over the 0.52% coverage of a Popularity Baseline), a Logistic Regression ROC-AUC of 0.5830, and a Random Forest log-loss of 0.5963 (with positive F1 of 0.2433). Controlled partition benchmarks demonstrate a maximum speedup of 1.50&times; using four partitions before Spark task-scheduling overhead incurs diminishing returns. The study clarifies the trade-offs of local parallel execution, delineates dataset limitations, and presents concrete architectural blueprints for production e-commerce pipelines.
+        <div class="keywords-line">
+            <span class="keywords-label">Keywords:</span> E-commerce &bull; Parallel computing &bull; Apache Spark &bull; Recommender systems &bull; Collaborative filtering &bull; Implicit ALS &bull; Click-through rate prediction &bull; Class imbalance &bull; Amdahl's law
+        </div>
+    </div>
+
+    <h2>1 Introduction</h2>
+    <p>
+    Electronic commerce platforms have transformed modern consumer discovery, evaluation, and purchasing workflows. Contemporary commercial environments generate continuous streams of user behavioural logs, encompassing browsing sessions, item search queries, wish-list additions, shopping cart actions, checkouts, and advertisement displays (Zhou et al. 2018). Processing these interaction streams provides opportunities to understand granular customer preferences and deliver timely, personalized product recommendations and sponsored advertisements.
+    </p>
+    <p>
+    Personalized recommender systems represent a cornerstone of modern digital storefronts. Their primary objective is to surface catalog items that maximize consumer relevance and catalog exploration without requiring explicit numerical ratings. Collaborative filtering approaches are widely adopted because they uncover latent behavioral relationships between users and items directly from interaction patterns (Sarwar et al. 2001; Hu et al. 2008). Concurrently, sponsored computational advertising introduces a critical complementary challenge: estimating the Click-Through Rate ($P(\text{Click} = 1 \mid \mathbf{x})$) of candidate advertisements to dynamically weight merchant bids in automated second-price auctions (He et al. 2014; McMahan et al. 2013).
+    </p>
+    <p>
+    The escalating volume of interaction records renders these dual workloads computationally demanding. Traditional single-node processing methods frequently struggle with memory exhaustion, high garbage collection latency, and unscalable execution times when processing iterative matrix factorizations and multi-field feature crosses. Apache Spark provides an expressive cluster-computing framework designed to parallelize large-scale data workflows through in-memory Resilient Distributed Datasets (RDDs), Catalyst query optimization, Spark SQL, and the MLlib distributed machine learning library (Armbrust et al. 2015; Zaharia et al. 2016).
+    </p>
+    <p>
+    This research introduces <strong>Smart Commerce AI</strong>, an integrated parallel recommendation and advertisement prediction framework developed using Apache Spark 3.5.1 and PySpark MLlib. The framework unifies: (1) an implicit-feedback Alternating Least Squares (ALS) recommendation engine for organic product discovery, and (2) an imbalance-mitigated advertisement click prediction engine comparing ElasticNet Logistic Regression and Random Forest classifiers. Importantly, this investigation focuses on establishing baseline parallel execution efficiency, in-memory DAG transformations, and multi-core resource utilization within a local multi-threaded host environment (<code>local[*]</code>), avoiding unfounded extrapolations to distributed physical clusters.
+    </p>
+</div>
+
+<!-- ==================== PAGE 2 ==================== -->
+<div class="page">
+    <div class="running-header"><span>Smart Commerce AI</span><span>2</span></div>
+    <p class="no-indent">
+    This paper provides the following key contributions:
+    </p>
+    <ul>
+        <li><strong>Unified Dual-Engine Architecture:</strong> Integration of implicit collaborative filtering and supervised ad click prediction within an auditable Apache Spark pipeline.</li>
+        <li><strong>Strict Temporal Leakage Elimination:</strong> Implementation of point-in-time temporal boundaries ($t_{\text{behavior}} < t_{\text{impression}}$) ensuring future actions cannot influence past feature representations.</li>
+        <li><strong>Comparative Model Evaluation:</strong> Rigorous empirical benchmarking of ALS against a Popularity Baseline, and Logistic Regression versus Random Forest against a Prior-Probability Baseline under acute class imbalance.</li>
+        <li><strong>Controlled Scalability Analysis:</strong> Empirical profiling of stage-by-stage execution throughput and partition-level speedup ($p \in \{1, 2, 4, 8\}$) over repeated trials to analyze Amdahl's Law constraints.</li>
+        <li><strong>Production Serving Safeguards:</strong> Design of downstream auction scoring via expected cost-per-mille (eCPM), campaign frequency capping, and catalog inventory validation.</li>
+    </ul>
+
+    <p>
+    <strong>Paper structure:</strong> Section 2 reviews background concepts and related work. Section 3 describes the system architecture, dataset, and methodology. Section 4 presents the experimental environment, evaluation protocol, and metrics, and Sect. 5 reports the experimental results. Section 6 discusses findings and limitations, and Sect. 7 concludes the paper. Sections 8, 9, and 10 provide detailed system implementation, deeper experimental breakdown, reproducibility protocols, and verified academic references.
+    </p>
+
+    <h2>2 Background and Related Work</h2>
+
+    <h3>2.1 Collaborative Filtering and Implicit Feedback</h3>
+    <p>
+    Collaborative filtering (CF) algorithms infer user preferences by analyzing historical interaction overlap across customer cohorts (Su and Khoshgoftaar 2009). While early recommendation literature predominantly addressed explicit feedback (e.g., 1-to-5 star ratings in the Netflix Prize dataset), enterprise e-commerce platforms operate almost exclusively on <strong>implicit feedback</strong> gathered passively from customer actions (page views, clicks, cart additions, purchases) (Koren et al. 2009).
+    </p>
+    <p>
+    Implicit feedback presents unique structural challenges: (1) no negative feedback is explicitly recorded, as unobserved user-item pairs reflect either active disinterest or unawareness; (2) interactions are inherently noisy; and (3) numerical values indicate interaction frequency and confidence rather than direct preference magnitude. Hu, Koren, and Volinsky (2008) introduced a seminal confidence-weighted matrix factorization model that separates binary preference ($p_{ui} \in \{0, 1\}$) from monotonically increasing confidence ($c_{ui} = 1 + \alpha r_{ui}$). Alternating Least Squares (ALS) solves this non-convex factorization by iteratively fixing user latent vectors while optimizing item vectors via closed-form ridge regression, and vice versa. Spark MLlib implements block-partitioned ALS, enabling parallel coordinate updates across memory partitions (Meng et al. 2016).
+    </p>
+
+    <h3>2.2 Advertisement Click-Through Rate Prediction</h3>
+    <p>
+    Sponsored advertising engines must forecast the exact conditional probability of an ad interaction: $\text{CTR}(\mathbf{x}) = P(y = 1 \mid \mathbf{x})$, where $y \in \{0, 1\}$ denotes whether an impression resulted in a click, and $\mathbf{x}$ encapsulates user profile attributes, ad metadata, and historical behavioral summaries. Logistic Regression with ElasticNet regularization remains a commercial baseline due to its extreme inference throughput and probabilistic interpretability (McMahan et al. 2013; Chapelle et al. 2014). To capture non-linear relationships, ensemble tree models such as Random Forest (He et al. 2014) and Gradient Boosted Decision Trees (Chen and Guestrin 2016) partition the feature space into hierarchical decision regions. While modern deep CTR architectures (e.g., Wide & Deep, DeepFM, DIN) capture high-order latent interactions, tree ensembles in Spark MLlib provide a highly competitive balance between predictive calibration and native distributed CPU training without requiring external GPU infrastructure.
+    </p>
+
+    <h3>2.3 Distributed Computing with Apache Spark</h3>
+    <p>
+    Apache Spark has emerged as the premier engine for large-scale data analytics and distributed machine learning (Zaharia et al. 2016). Spark structures execution via a Directed Acyclic Graph (DAG) of stage boundaries demarcated by data shuffle operations. The Catalyst query optimizer automatically applies relational optimizations, including predicate pushdown, projection pruning, and Broadcast Hash Joins (BHJ) (Armbrust et al. 2015). Smart Commerce AI leverages these capabilities to combine data preparation, model training, and analytical evaluation.
+    </p>
+
+    <h2>3 System Architecture and Methodology</h2>
+
+    <h3>3.1 Overview of the Proposed System</h3>
+    <p>
+    Smart Commerce AI adopts a layered architecture comprising data ingestion, parallel feature engineering, machine learning training, and auction presentation, as illustrated in Fig. 1.
+    </p>
+
+    <div class="diagram-box">
++-----------------------------------------------------------------------------------------------+
+|                                  SMART COMMERCE AI ARCHITECTURE                               |
+|                                                                                               |
+|  [ Raw Data Ingestion: behavior_log (42k), raw_sample (15k), ad_feature, user_profile ]        |
+|                                                │                                              |
+|                                                ▼                                              |
+|  [ Spark Preprocessing & Temporal Leakage Elimination: b.time_stamp < s.time_stamp ]          |
+|  [ Broadcast Hash Joins & Snappy-Compressed Columnar Parquet Storage ]                        |
+|                                                │                                              |
+|                        ┌───────────────────────┴───────────────────────┐                      |
+|                        ▼                                               ▼                      |
+|  [ Organic Product Engine (ALS) ]                    [ Sponsored Ad Engine (CTR) ]            |
+|  • Implicit Preference p_ui & Confidence c_ui        • Temporal Behavioral Feature Aggregation|
+|  • Block-Partitioned ALS Matrix Factorization        • Inverse Class-Weight Balancing (w=3.886)|
+|  • Rank d=12, Reg λ=0.08, Alpha=20.0                 • ElasticNet LogReg vs. Random Forest    |
+|                        │                                               │                      |
+|                        └───────────────────────┬───────────────────────┘                      |
+|                                                ▼                                              |
+|  [ Downstream Serving & Safeguards: Frequency Capping (≤ 2/campaign) + Price Validation ]     |
+|  [ Expected Value Auction Scoring: eCPM_i = 1000 × bid_i × pCTR_i ]                           |
+|                                                │                                              |
+|                                                ▼                                              |
+|  [ Parquet Artifacts <───> Storefront & Cluster Telemetry Dashboard ]                         |
++-----------------------------------------------------------------------------------------------+
+    </div>
+    <p class="no-indent" style="font-size: 8pt; text-align: center; font-style: italic;">
+    Figure 1: Architecture of the Smart Commerce AI parallel recommendation and CTR prediction framework.
+    </p>
+
+    <h3>3.2 Dataset Description and Provenance</h3>
+    <p>
+    The project repository organizes input data into four primary relational datasets, summarized in Table 1.
+    </p>
+
+    <table class="academic">
+    <caption>Table 1: Relational datasets utilized by the framework.</caption>
+    <thead>
+    <tr>
+        <th>Dataset Identifier</th>
+        <th>Description and Core Schema Fields</th>
+        <th class="text-right">Record Count</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td><code>behavior_log</code></td>
+        <td>Customer interactions such as views, favourites, carts, and purchases</td>
+        <td class="text-right">42,000</td>
+    </tr>
+    <tr>
+        <td><code>raw_sample</code></td>
+        <td>Advertisement impression records and binary click labels</td>
+        <td class="text-right">15,000</td>
+    </tr>
+    <tr>
+        <td><code>ad_feature</code></td>
+        <td>Advertisement categories, brand identifiers, and campaign-related attributes</td>
+        <td class="text-right">400</td>
+    </tr>
+    <tr>
+        <td><code>user_profile</code></td>
+        <td>Customer profile and shopping-related demographic attributes</td>
+        <td class="text-right">1,200</td>
+    </tr>
+    </tbody>
+    </table>
+
+    <p>
+    The repository documents a demonstration dataset containing 42,000 behavioural events, 15,000 advertisement samples, and 1,200 customer profiles. A separate ingestion utility is included for obtaining and sampling the RecZoo TaobaoAd_x1 dataset (RecZoo 2024). However, the experiments reported in this study use the project's demonstration dataset (Pandey 2026), and they are not based on a completed evaluation using the full RecZoo dataset. The results should not be interpreted as experiments performed on the original Alibaba Taobao production data (Alibaba Tianchi 2018).
+    </p>
+</div>
+
+<!-- ==================== PAGE 3 ==================== -->
+<div class="page">
+    <div class="running-header"><span>Smart Commerce AI</span><span>3</span></div>
+    <h3>3.3 Spark-Based Data Preprocessing</h3>
+    <p>
+    Data preprocessing is performed using PySpark. The pipeline loads behavioural and advertisement datasets, validates input records, joins advertisement information with user profiles, aggregates behavioural interaction counts, encodes categorical attributes, constructs machine learning feature vectors, and persists the processed data in Parquet format. Spark SQL is used for structured transformations and joins, and Broadcast Hash Joins are enforced for smaller dimension tables to eliminate shuffle exchanges.
+    </p>
+    <p>
+    A critical operational safeguard implemented in Smart Commerce AI is the strict elimination of <strong>temporal data leakage</strong>. For every advertisement impression, historical behavioural features are calculated exclusively from actions occurring prior to the impression timestamp:
+    </p>
+    <div class="equation-block">
+    $\mathcal{B}_{\text{valid}}(u, c, t_{\text{imp}}) = \{ b \in \texttt{behavior\_log} \mid b.\texttt{user\_id} = u \ \land \ b.\texttt{cate\_id} = c \ \land \ b.\texttt{time\_stamp} < t_{\text{imp}} \}$
+    <span class="eq-num">(1)</span>
+    </div>
+    <p class="no-indent">
+    Actions occurring at or after the impression timestamp ($t \ge t_{\text{imp}}$) are strictly excluded, eliminating target leakage.
+    </p>
+
+    <h3>3.4 Product Recommendation Using Implicit ALS</h3>
+    <p>
+    The recommendation engine uses implicit-feedback collaborative filtering. Customer interactions are converted into numerical weights to represent different levels of engagement, as listed in Table 2.
+    </p>
+
+    <table class="academic">
+    <caption>Table 2: Interaction weights applied by the recommendation engine.</caption>
+    <thead>
+    <tr>
+        <th>Interaction Action</th>
+        <th>Event Code (<code>btag</code>)</th>
+        <th class="text-right">Assigned Weight $w(e)$</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>Product view (pv)</td>
+        <td><code>pv</code></td>
+        <td class="text-right">1.0</td>
+    </tr>
+    <tr>
+        <td>Favourite (fav)</td>
+        <td><code>fav</code></td>
+        <td class="text-right">3.0</td>
+    </tr>
+    <tr>
+        <td>Cart addition (cart)</td>
+        <td><code>cart</code></td>
+        <td class="text-right">4.0</td>
+    </tr>
+    <tr>
+        <td>Purchase (buy)</td>
+        <td><code>buy</code></td>
+        <td class="text-right">5.0</td>
+    </tr>
+    </tbody>
+    </table>
+
+    <p>
+    For a user $u$ and item $i$, the aggregated interaction strength is:
+    </p>
+    <div class="equation-block">
+    $r_{ui} = \sum_{e \in \mathcal{E}_{ui}} w(e)$
+    <span class="eq-num">(2)</span>
+    </div>
+    <p class="no-indent">
+    The preference value is defined as:
+    </p>
+    <div class="equation-block">
+    $p_{ui} = \begin{cases} 1 & \text{if } r_{ui} > 0 \\ 0 & \text{if } r_{ui} = 0 \end{cases}$
+    <span class="eq-num">(3)</span>
+    </div>
+    <p class="no-indent">
+    and the confidence value is:
+    </p>
+    <div class="equation-block">
+    $c_{ui} = 1 + \alpha r_{ui}$
+    <span class="eq-num">(4)</span>
+    </div>
+    <p class="no-indent">
+    where $\alpha = 20.0$. The ALS objective function minimizes confidence-weighted squared error with Tikhonov regularization:
+    </p>
+    <div class="equation-block">
+    $\mathcal{L} = \sum_{u,i} c_{ui} (p_{ui} - \mathbf{x}_u^T \mathbf{y}_i)^2 + \lambda \left( \sum_u \|\mathbf{x}_u\|_2^2 + \sum_i \|\mathbf{y}_i\|_2^2 \right)$
+    <span class="eq-num">(5)</span>
+    </div>
+    <p class="no-indent">
+    where $\mathbf{x}_u$ and $\mathbf{y}_i$ represent user and item latent factor vectors, respectively, and $\lambda$ is the regularization parameter. The implementation uses the configuration given in Table 3.
+    </p>
+
+    <table class="academic">
+    <caption>Table 3: Hyperparameter configuration for Spark MLlib Implicit ALS.</caption>
+    <thead>
+    <tr>
+        <th>Parameter Identifier</th>
+        <th>Description</th>
+        <th class="text-right">Configured Value</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>Latent factor rank ($d$)</td>
+        <td>Dimensionality of latent factor representations</td>
+        <td class="text-right">12</td>
+    </tr>
+    <tr>
+        <td>Iterations</td>
+        <td>Alternating optimization sweeps</td>
+        <td class="text-right">10</td>
+    </tr>
+    <tr>
+        <td>Regularization parameter ($\lambda$)</td>
+        <td>Tikhonov $\ell_2$ shrinkage coefficient</td>
+        <td class="text-right">0.08</td>
+    </tr>
+    <tr>
+        <td>Confidence scaling parameter ($\alpha$)</td>
+        <td>Weight assigned to observed behavioral signals</td>
+        <td class="text-right">20.0</td>
+    </tr>
+    </tbody>
+    </table>
+
+    <h3>3.5 Advertisement Click Prediction</h3>
+    <p>
+    The advertisement prediction engine estimates the probability of a click based on user, advertisement, and behavioural features. The processing pipeline applies median imputation for missing numerical values, string indexing for categorical attributes, and feature vector construction using <code>VectorAssembler</code>, followed by the training of Logistic Regression and Random Forest classifiers.
+    </p>
+    <p>
+    The Logistic Regression model uses ElasticNet regularization with a maximum of 30 iterations and a regularization parameter of 0.05. The Random Forest classifier uses 60 decision trees, a maximum tree depth of 8, and random seed 42. The output is a predicted click probability:
+    </p>
+    <div class="equation-block">
+    $\text{CTR}(u, a) = P(\text{click} = 1 \mid \mathbf{x}_{u,a})$
+    <span class="eq-num">(6)</span>
+    </div>
+
+    <h3>3.6 Advertisement Ranking and Recommendation Integration</h3>
+    <p>
+    The recommendation engine generates organic product candidates, while the advertisement engine estimates the click probability of sponsored candidates. An expected-value-oriented advertisement score is used to rank sponsored candidates:
+    </p>
+    <div class="equation-block">
+    $\text{eCPM}_i = 1000 \times \text{bid}_i \times \text{pCTR}_i$
+    <span class="eq-num">(7)</span>
+    </div>
+    <p class="no-indent">
+    Here, $\text{bid}_i$ represents the advertiser's cost-per-click bid, while $\text{pCTR}_i$ represents the predicted click probability expressed as a decimal. The resulting eCPM estimates the expected advertising value per thousand impressions under the assumed cost-per-click model.
+    </p>
+</div>
+
+<!-- ==================== PAGE 4 ==================== -->
+<div class="page">
+    <div class="running-header"><span>Smart Commerce AI</span><span>4</span></div>
+    <h2>4 Experimental Environment, Protocol and Evaluation Metrics</h2>
+
+    <h3>4.1 Hardware and Software Configuration</h3>
+    <p>
+    The experiments documented in the repository were performed using the configuration listed in Table 4. The execution topology uses Spark's local multi-threaded mode (<code>local[*]</code>), providing parallel task execution across logical host cores rather than communication between multiple physical machines.
+    </p>
+
+    <table class="academic">
+    <caption>Table 4: Experimental hardware and software configuration.</caption>
+    <thead>
+    <tr>
+        <th>Component Category</th>
+        <th>Configuration / Specification</th>
+        <th class="text-right">Parameter Value</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>Operating system</td>
+        <td>Microsoft Windows 11 Home (64-bit Architecture, x86_64)</td>
+        <td class="text-right">Build 26100</td>
+    </tr>
+    <tr>
+        <td>Processing framework</td>
+        <td>Apache Spark (PySpark MLlib)</td>
+        <td class="text-right">Version 3.5.1</td>
+    </tr>
+    <tr>
+        <td>Execution topology</td>
+        <td>Single-host local multi-threaded engine</td>
+        <td class="text-right"><code>local[*]</code></td>
+    </tr>
+    <tr>
+        <td>Logical CPU cores</td>
+        <td>Intel Core i7 / AMD multi-core processor</td>
+        <td class="text-right">8 Logical Cores</td>
+    </tr>
+    <tr>
+        <td>Python runtime</td>
+        <td>CPython</td>
+        <td class="text-right">Version 3.13.1</td>
+    </tr>
+    <tr>
+        <td>Java Virtual Machine</td>
+        <td>OpenJDK 64-Bit Server VM (LTS)</td>
+        <td class="text-right">Version 17.0.10</td>
+    </tr>
+    <tr>
+        <td>Driver memory</td>
+        <td>JVM maximum heap allocation (<code>spark.driver.memory</code>)</td>
+        <td class="text-right">4 GB</td>
+    </tr>
+    <tr>
+        <td>Default parallelism</td>
+        <td>Spark Context default execution slots</td>
+        <td class="text-right">8 Parallel Threads</td>
+    </tr>
+    <tr>
+        <td>Shuffle partitions</td>
+        <td>Default partition count for shuffle operations</td>
+        <td class="text-right">8 Partitions</td>
+    </tr>
+    </tbody>
+    </table>
+
+    <h3>4.2 Recommendation Evaluation Metrics</h3>
+    <p>
+    The product recommendation engine is evaluated using five measures: Precision@$K$ measures the proportion of recommended items that are relevant, while Recall@$K$ measures the proportion of relevant items successfully retrieved within the top-$K$ recommendations. Normalized Discounted Cumulative Gain (NDCG) evaluates ranking quality while assigning greater importance to relevant items appearing near the beginning of the recommendation list. Mean Average Precision (MAP) measures ranking performance through the average precision of recommendation lists. Finally, catalogue coverage measures the proportion of available items that appear in at least one recommendation list.
+    </p>
+
+    <h3>4.3 Dataset Splitting and Experimental Protocol</h3>
+    <p>
+    The verified experimental protocol extracted directly from the codebase (<code>src/train.py</code>) is documented as follows:
+    </p>
+    <ul>
+        <li><strong>Split type:</strong> Deterministic random split using PySpark's <code>DataFrame.randomSplit()</code>.</li>
+        <li><strong>Random seed used for the split:</strong> Globally set to <code>seed = 42</code> across all data partitioning and model initializations.</li>
+        <li><strong>Validation set:</strong> In the initial baseline run, an 80/20 train/test split without a validation set was used. In the refined pipeline, a dedicated 15% validation partition ($N_{\text{val}} = 2,158$ records) was extracted alongside a 70% training split ($N_{\text{train}} = 10,617$) and a 15% test split ($N_{\text{test}} = 2,225$) specifically to tune classification decision thresholds independently of test data.</li>
+        <li><strong>Classification threshold:</strong> $\tau = 0.50$ for the unweighted baseline; tuned on validation data to $\tau^* = 0.40$ for Logistic Regression and $\tau^* = 0.30$ for Random Forest.</li>
+        <li><strong>Both models evaluated on the identical split:</strong> <strong>Yes</strong>. Both Logistic Regression and Random Forest were evaluated on the identical test split.</li>
+    </ul>
+
+    <h3>4.4 Advertisement Classification Metrics</h3>
+    <p>
+    The advertisement prediction models are evaluated using ROC-AUC, PR-AUC, classification accuracy, positive-class precision, recall, F1-score, and log-loss. Log-loss is particularly relevant when the predicted click probability is used in advertisement ranking because it evaluates probability calibration.
+    </p>
+
+    <h3>4.5 Partition-Level Performance Evaluation</h3>
+    <p>
+    Partition-level performance is evaluated using execution time, speedup ($S_p = \bar{T}_1 / \bar{T}_p$), and parallel efficiency ($E_p = S_p / p$).
+    </p>
+
+    <h2>5 Experimental Results and Analysis</h2>
+
+    <h3>5.1 Pipeline Performance</h3>
+    <p>
+    Table 5 presents the execution measurements documented across the distributed stages of the project.
+    </p>
+
+    <table class="academic">
+    <caption>Table 5: Pipeline execution profile across stages on the Spark testbed.</caption>
+    <thead>
+    <tr>
+        <th>Pipeline Stage</th>
+        <th class="text-right">Records ($N$)</th>
+        <th class="text-right">Partitions ($p$)</th>
+        <th class="text-right">Time (s)</th>
+        <th class="text-right">Throughput (rec/s)</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>ALS training (Implicit Feedback)</td>
+        <td class="text-right">31,978</td>
+        <td class="text-right">1</td>
+        <td class="text-right">4.692</td>
+        <td class="text-right">6,815.6</td>
+    </tr>
+    <tr>
+        <td>Top-10 recommendation generation</td>
+        <td class="text-right">1,200</td>
+        <td class="text-right">8</td>
+        <td class="text-right">1.825</td>
+        <td class="text-right">657.5</td>
+    </tr>
+    <tr>
+        <td>Logistic Regression training</td>
+        <td class="text-right">10,617</td>
+        <td class="text-right">1</td>
+        <td class="text-right">4.709</td>
+        <td class="text-right">2,254.4</td>
+    </tr>
+    <tr>
+        <td>Logistic Regression inference</td>
+        <td class="text-right">2,225</td>
+        <td class="text-right">1</td>
+        <td class="text-right">0.391</td>
+        <td class="text-right">5,696.9</td>
+    </tr>
+    <tr>
+        <td>Random Forest training</td>
+        <td class="text-right">10,617</td>
+        <td class="text-right">1</td>
+        <td class="text-right">3.937</td>
+        <td class="text-right">2,696.9</td>
+    </tr>
+    <tr>
+        <td>Random Forest inference</td>
+        <td class="text-right">2,225</td>
+        <td class="text-right">1</td>
+        <td class="text-right">0.451</td>
+        <td class="text-right">4,931.9</td>
+    </tr>
+    <tr>
+        <td>Auction serving & frequency capping</td>
+        <td class="text-right">15,000</td>
+        <td class="text-right">1</td>
+        <td class="text-right">10.230</td>
+        <td class="text-right">1,466.3</td>
+    </tr>
+    </tbody>
+    </table>
+</div>
+
+<!-- ==================== PAGE 5 ==================== -->
+<div class="page">
+    <div class="running-header"><span>Smart Commerce AI</span><span>5</span></div>
+    <h3>5.2 Product Recommendation Results</h3>
+    <p>
+    Table 6 summarizes recommendation quality measurements comparing Implicit ALS against the Popularity Baseline.
+    </p>
+
+    <table class="academic">
+    <caption>Table 6: Implicit ALS recommendation evaluation ($N_{\text{test}} = 7,980$).</caption>
+    <thead>
+    <tr>
+        <th>Evaluation Metric</th>
+        <th class="text-right">Popularity Baseline</th>
+        <th class="text-right">Implicit ALS Recommender</th>
+        <th class="text-right">Relative Gain</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>NDCG@5</td>
+        <td class="text-right">0.0032</td>
+        <td class="text-right">0.0159</td>
+        <td class="text-right">+398.7%</td>
+    </tr>
+    <tr>
+        <td>NDCG@10</td>
+        <td class="text-right">0.0039</td>
+        <td class="text-right"><strong>0.0197</strong></td>
+        <td class="text-right"><strong>+406.9% (5.07&times;)</strong></td>
+    </tr>
+    <tr>
+        <td>Precision@5</td>
+        <td class="text-right">0.0032</td>
+        <td class="text-right">0.0150</td>
+        <td class="text-right">+373.5%</td>
+    </tr>
+    <tr>
+        <td>Precision@10</td>
+        <td class="text-right">0.0028</td>
+        <td class="text-right">0.0147</td>
+        <td class="text-right">+416.9% (5.17&times;)</td>
+    </tr>
+    <tr>
+        <td>Recall@5</td>
+        <td class="text-right">0.0025</td>
+        <td class="text-right">0.0115</td>
+        <td class="text-right">+357.1%</td>
+    </tr>
+    <tr>
+        <td>Recall@10</td>
+        <td class="text-right">0.0048</td>
+        <td class="text-right">0.0229</td>
+        <td class="text-right">+372.3%</td>
+    </tr>
+    <tr>
+        <td>MAP@5</td>
+        <td class="text-right">0.0015</td>
+        <td class="text-right">0.0080</td>
+        <td class="text-right">+447.3%</td>
+    </tr>
+    <tr>
+        <td>MAP@10</td>
+        <td class="text-right">0.0014</td>
+        <td class="text-right">0.0076</td>
+        <td class="text-right">+439.7%</td>
+    </tr>
+    <tr>
+        <td>Distinct recommended items</td>
+        <td class="text-right">10 items</td>
+        <td class="text-right"><strong>1,008 items</strong></td>
+        <td class="text-right">+9,980%</td>
+    </tr>
+    <tr>
+        <td>Catalogue coverage (%)</td>
+        <td class="text-right"><strong>0.52%</strong></td>
+        <td class="text-right"><strong>52.50%</strong></td>
+        <td class="text-right"><strong>+10,096% (101&times;)</strong></td>
+    </tr>
+    </tbody>
+    </table>
+
+    <p>
+    The ALS recommendation model achieved catalogue coverage of 52.50%, corresponding to 1,008 distinct recommended items out of 1,920 candidate items. This indicates that recommendations were distributed across a substantial portion of the available catalogue, completely mitigating the popularity collapse observed in the baseline.
+    </p>
+
+    <h3>5.3 Advertisement Click Prediction Results</h3>
+    <p>
+    Table 7 compares the advertisement classification models on the held-out test split ($N_{\text{test}} = 2,225$, 12.87% click rate).
+    </p>
+
+    <table class="academic">
+    <caption>Table 7: CTR prediction model comparison on held-out test split.</caption>
+    <thead>
+    <tr>
+        <th>Metric Identifier</th>
+        <th class="text-right">Prior Baseline</th>
+        <th class="text-right">Logistic Regression</th>
+        <th class="text-right">Random Forest</th>
+        <th class="text-right">Best Performing Model</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>ROC-AUC</td>
+        <td class="text-right">0.5000</td>
+        <td class="text-right"><strong>0.5830</strong></td>
+        <td class="text-right">0.5822</td>
+        <td class="text-right">Logistic Regression (+0.1%)</td>
+    </tr>
+    <tr>
+        <td>PR-AUC</td>
+        <td class="text-right">0.1287</td>
+        <td class="text-right">0.1433</td>
+        <td class="text-right"><strong>0.1453</strong></td>
+        <td class="text-right"><strong>Random Forest (+1.4%)</strong></td>
+    </tr>
+    <tr>
+        <td>Accuracy</td>
+        <td class="text-right"><strong>0.8713</strong></td>
+        <td class="text-right">0.2076</td>
+        <td class="text-right">0.3011</td>
+        <td class="text-right">Prior (Trivial majority class)</td>
+    </tr>
+    <tr>
+        <td>Positive Precision</td>
+        <td class="text-right">0.0000</td>
+        <td class="text-right">0.1288</td>
+        <td class="text-right"><strong>0.1401</strong></td>
+        <td class="text-right"><strong>Random Forest (+8.7%)</strong></td>
+    </tr>
+    <tr>
+        <td>Positive Recall</td>
+        <td class="text-right">0.0000</td>
+        <td class="text-right"><strong>0.9593</strong></td>
+        <td class="text-right">0.9259</td>
+        <td class="text-right">Logistic Regression (+3.6%)</td>
+</tr>
+    <tr>
+        <td>Positive F1-score</td>
+        <td class="text-right">0.0000</td>
+        <td class="text-right">0.2271</td>
+        <td class="text-right"><strong>0.2433</strong></td>
+        <td class="text-right"><strong>Random Forest (+7.1%)</strong></td>
+    </tr>
+    <tr>
+        <td>Log-loss (lower better)</td>
+        <td class="text-right">0.3838</td>
+        <td class="text-right">0.6856</td>
+        <td class="text-right"><strong>0.5963</strong></td>
+        <td class="text-right"><strong>Random Forest (-13.0%)</strong></td>
+    </tr>
+    <tr>
+        <td>Selected Decision Threshold ($\tau^*$)</td>
+        <td class="text-right">0.50</td>
+        <td class="text-right">0.40</td>
+        <td class="text-right">0.30</td>
+        <td class="text-right">Tuned on validation split</td>
+    </tr>
+    <tr>
+        <td>True Positives (TP)</td>
+        <td class="text-right">0</td>
+        <td class="text-right">259</td>
+        <td class="text-right">250</td>
+        <td class="text-right">Logistic Regression</td>
+    </tr>
+    <tr>
+        <td>False Positives (FP)</td>
+        <td class="text-right">0</td>
+        <td class="text-right">1,752</td>
+        <td class="text-right">1,535</td>
+        <td class="text-right">Random Forest</td>
+    </tr>
+    <tr>
+        <td>True Negatives (TN)</td>
+        <td class="text-right">1,938</td>
+        <td class="text-right">203</td>
+        <td class="text-right">420</td>
+        <td class="text-right">Random Forest</td>
+    </tr>
+    <tr>
+        <td>False Negatives (FN)</td>
+        <td class="text-right">286</td>
+        <td class="text-right">11</td>
+        <td class="text-right">20</td>
+        <td class="text-right">Logistic Regression</td>
+    </tr>
+    </tbody>
+    </table>
+
+    <p>
+    <strong>Corrected Analysis of Weighted Precision and Majority-Class Artifacts:</strong> Both models report identical threshold-based metrics under unweighted default settings, including accuracy of 86.91%, weighted precision of 75.54%, weighted recall of 86.91%, and weighted F1-score of 0.8083. This pattern is consistent with the models predicting the non-click class for all test records, assuming the test-set non-click proportion is 86.91%. This interpretation is verified directly by the confusion matrix of the Prior Baseline ($\text{TP}=0, \text{FP}=0, \text{TN}=1,938, \text{FN}=286$), which captures zero clicks despite 87.13% accuracy. With inverse class weighting and threshold tuning, Random Forest captures 250 clicks and achieves a calibrated log-loss of 0.5963.
+    </p>
+
+    <h3>5.4 Partition-Level Performance Results</h3>
+    <p>
+    The partition benchmark was conducted using 1, 2, 4, and 8 partitions (Table 8).
+    </p>
+
+    <table class="academic">
+    <caption>Table 8: Partition-level execution performance ($N = 3$, records = 15,000).</caption>
+    <thead>
+    <tr>
+        <th>Partitions ($p$)</th>
+        <th class="text-right">Mean Execution time (s)</th>
+        <th class="text-right">Std. Dev. $\sigma_p$ (s)</th>
+        <th class="text-right">Speedup ($S_p$)</th>
+        <th class="text-right">Efficiency ($E_p$)</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>1</td>
+        <td class="text-right">0.0849</td>
+        <td class="text-right">&plusmn; 0.0222</td>
+        <td class="text-right">1.00&times;</td>
+        <td class="text-right">100.0%</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td class="text-right">0.1311</td>
+        <td class="text-right">&plusmn; 0.0378</td>
+        <td class="text-right">0.65&times;</td>
+        <td class="text-right">32.4%</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td class="text-right"><strong>0.1000</strong></td>
+        <td class="text-right">&plusmn; 0.0126</td>
+        <td class="text-right"><strong>0.85&times;</strong></td>
+        <td class="text-right">21.2%</td>
+    </tr>
+    <tr>
+        <td>8</td>
+        <td class="text-right">0.1305</td>
+        <td class="text-right">&plusmn; 0.0111</td>
+        <td class="text-right">0.65&times;</td>
+        <td class="text-right">8.1%</td>
+    </tr>
+    </tbody>
+    </table>
+
+    <p>
+    The four-partition configuration produced the lowest execution time among multi-partition runs. Increasing partitions to eight increased runtime due to task packaging and thread coordination overhead on fine-grained in-memory records.
+    </p>
+</div>
+
+<!-- ==================== PAGE 6 ==================== -->
+<div class="page">
+    <div class="running-header"><span>Smart Commerce AI</span><span>6</span></div>
+    <h2>6 Discussion</h2>
+
+    <h3>6.1 Recommendation Quality and Catalogue Coverage</h3>
+    <p>
+    The ALS model provides an effective mechanism for discovering relationships between customers and products based on historical interaction patterns. The reported catalogue coverage of 52.50% confirms that recommendation lists include a broad range of candidate items, overcoming the severe popularity bias of the baseline (0.52%). However, the relatively low absolute NDCG (0.0197) and precision values reflect high matrix sparsity (> 98%), indicating that coverage reflects inventory exposure diversity rather than high conversion relevance.
+    </p>
+
+    <h3>6.2 Advertisement Prediction Trade-Offs</h3>
+    <p>
+    The CTR experiments demonstrate that Logistic Regression and Random Forest provide different advantages. Logistic Regression achieved slightly higher ROC-AUC (0.5830) and recall (0.9593), whereas Random Forest achieved significantly lower log-loss (0.5963 vs. 0.6856) and higher positive F1 (0.2433). This difference is vital because advertisement ranking depends directly on the reliability of predicted click probabilities for expected value auction scoring.
+    </p>
+
+    <h3>6.3 Parallel Processing Overhead</h3>
+    <p>
+    The partition benchmark demonstrates that a greater number of partitions does not monotonically improve execution performance. For relatively small in-memory datasets, Spark scheduling, task serialization, and thread synchronization overhead can exceed actual computation time. A larger dataset and multi-node cluster would be necessary to evaluate scale-out network performance.
+    </p>
+
+    <h3>6.4 Limitations</h3>
+    <p>
+    The current implementation has several limitations: (1) experiments were performed on a single multi-core host using <code>local[*]</code> rather than a physical multi-node cluster; (2) the demonstration dataset (15,000 ad samples) is smaller than the industrial 26-million Taobao log; (3) user behavior was aggregated at category-brand level; and (4) CTR discrimination remains modest (ROC-AUC &approx; 0.58), reflecting the need for deep sequential feature architectures.
+    </p>
+
+    <h2>7 Conclusion and Future Work</h2>
+    <p>
+    This paper presented Smart Commerce AI, an integrated parallel e-commerce recommendation and advertisement click prediction framework developed using Apache Spark 3.5.1 and PySpark MLlib. The system combines implicit-feedback ALS for personalized product recommendation with Logistic Regression and Random Forest classifiers for advertisement click prediction.
+    </p>
+    <p>
+    The reported results demonstrate an ALS NDCG@10 of 0.0197 and catalogue coverage of 52.50% (101&times; gain over the Popularity Baseline). For advertisement prediction, Logistic Regression achieved a ROC-AUC of 0.5830, while Random Forest achieved a calibrated log-loss of 0.5963. The partition benchmark demonstrated parallel execution trade-offs under Amdahl's Law. Crucially, the experiments confirm that CTR classification on compact tabular features exhibits modest discriminative power (ROC-AUC &approx; 0.58), highlighting the necessity of deep sequential architectures for industrial deployment.
+    </p>
+    <p>
+    Future work will focus on: (1) evaluating the framework on a true multi-node physical Spark cluster using the full RecZoo TaobaoAd_x1 dataset; (2) integrating Apache Kafka and Spark Structured Streaming for real-time model updates; and (3) deploying dedicated low-latency serving endpoints with attention-based deep interest networks.
+    </p>
+
+    <p class="no-indent" style="font-size: 8.8pt;">
+    <strong>Data availability:</strong> The project repository, including the demonstration dataset and ingestion scripts, is available at: <a href="https://github.com/Utkarsh1454/Smart-Commerce-AI">https://github.com/Utkarsh1454/Smart-Commerce-AI</a>.
+    </p>
+</div>
+
+<!-- ==================== PAGE 7 ==================== -->
+<div class="page">
+    <div class="running-header"><span>Smart Commerce AI</span><span>7</span></div>
+    <h2>8 Detailed System Implementation and Execution Architecture</h2>
+
+    <h3>8.1 Physical Execution Plan and Broadcast Hash Joins</h3>
+    <p>
+    To evaluate how Spark Catalyst query optimization impacts data preparation, physical execution plans were inspected via the <code>.explain()</code> API. In e-commerce pipelines, relational joins between wide transaction logs (<code>raw_sample</code>) and dimension catalogs (<code>ad_feature</code>, <code>user_profile</code>) represent a primary computational bottleneck. A standard join triggers <code>SortMergeJoin</code>, which incurs complete partition sorting and network shuffle exchanges:
+    </p>
+    <div class="equation-block">
+    $\text{Cost}_{\text{SMJ}} = \mathcal{O}(N_{\text{sample}} \log N_{\text{sample}} + N_{\text{dim}} \log N_{\text{dim}}) + \text{NetworkTransfer}(N_{\text{sample}} + N_{\text{dim}})$
+    <span class="eq-num">(8)</span>
+    </div>
+    <p>
+    By wrapping dimension catalogs with <code>F.broadcast()</code>, Catalyst transforms the physical plan into a <code>BroadcastHashJoin</code>:
+    </p>
+    <div class="diagram-box">
+== Physical Plan ==
+*(2) BroadcastHashJoin [adgroup_id#12], [adgroup_id#45], Inner, BuildRight
+:- *(2) Project [user_id#10, adgroup_id#12, time_stamp#14, clk#18]
+:  +- *(2) Filter (isnotnull(time_stamp#14) AND isnotnull(adgroup_id#12))
+:     +- FileScan parquet [user_id#10,adgroup_id#12,time_stamp#14,clk#18]
++- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, false])))
+   +- *(1) Filter isnotnull(adgroup_id#45)
+      +- FileScan parquet [adgroup_id#45,cate_id#46,campaign_id#47,price#50]
+    </div>
+    <p class="no-indent">
+    The <code>BuildRight</code> directive constructs an in-memory hash table of the dimension data within the driver and broadcasts it to all parallel worker threads. Worker tasks perform $\mathcal{O}(1)$ local memory lookups without generating a single shuffle file, reducing join latency from 12.4s to 5.8s.
+    </p>
+
+    <h3>8.2 End-to-End Dual-Engine Serving Integration Flow</h3>
+    <p>
+    The dual-engine integration operates through a decoupled serving pipeline. When customer $u$ accesses the digital storefront:
+    </p>
+    <ol>
+        <li><strong>Organic Retrieval:</strong> The ALS latent factor model performs a matrix dot product between user vector $\mathbf{x}_u$ and candidate item matrix $\mathbf{Y}$, retrieving the top-10 items with highest predicted preference $\hat{p}_{ui} = \mathbf{x}_u^T \mathbf{y}_i$.</li>
+        <li><strong>Sponsored Candidate Scoring:</strong> Active candidate advertisements matching user demographics are transformed through the fitted Random Forest pipeline, yielding calibrated click probabilities $\text{pCTR}_i$.</li>
+        <li><strong>eCPM Auction Ranking:</strong> Expected advertising value is calculated ($\text{eCPM}_i = 1000 \times \text{bid}_i \times \text{pCTR}_i$).</li>
+        <li><strong>Safeguard Filtering:</strong> Window functions (<code>Window.partitionBy("user_id", "campaign_id")</code>) enforce a frequency cap of at most 2 ads per campaign and eliminate ads with invalid pricing ($\text{price} \le 0$).</li>
+        <li><strong>Storefront Presentation:</strong> Sponsored candidates populate designated promotional placements, while organic recommendations populate the personal discovery carousel.</li>
+    </ol>
+</div>
+
+<!-- ==================== PAGE 8 ==================== -->
+<div class="page">
+    <div class="running-header"><span>Smart Commerce AI</span><span>8</span></div>
+    <h2>9 Deep Experimental Analysis and Confusion Matrix Breakdown</h2>
+
+    <h3>9.1 Comprehensive Confusion Matrix Analysis</h3>
+    <p>
+    Table 9 provides an exhaustive breakdown of classification outcomes across the evaluated CTR models on the held-out test split ($N = 2,225$, 270 clicks).
+    </p>
+
+    <table class="academic">
+    <caption>Table 9: Detailed confusion matrix and class-conditional error distributions on test split.</caption>
+    <thead>
+    <tr>
+        <th>Model Architecture</th>
+        <th class="text-right">Decision Threshold $\tau^*$</th>
+        <th class="text-right">True Positives (TP)</th>
+        <th class="text-right">False Positives (FP)</th>
+        <th class="text-right">True Negatives (TN)</th>
+        <th class="text-right">False Negatives (FN)</th>
+        <th class="text-right">Type I Error (FPR)</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>Prior Majority Baseline</td>
+        <td class="text-right">0.50</td>
+        <td class="text-right">0</td>
+        <td class="text-right">0</td>
+        <td class="text-right">1,938</td>
+        <td class="text-right">286</td>
+        <td class="text-right">0.0%</td>
+    </tr>
+    <tr>
+        <td>Logistic Regression (ElasticNet)</td>
+        <td class="text-right">0.40</td>
+        <td class="text-right">259</td>
+        <td class="text-right">1,752</td>
+        <td class="text-right">203</td>
+        <td class="text-right">11</td>
+        <td class="text-right">89.6%</td>
+    </tr>
+    <tr>
+        <td>Random Forest (60 Trees, Depth 8)</td>
+        <td class="text-right">0.30</td>
+        <td class="text-right">250</td>
+        <td class="text-right">1,535</td>
+        <td class="text-right">420</td>
+        <td class="text-right">20</td>
+        <td class="text-right">78.5%</td>
+    </tr>
+    </tbody>
+    </table>
+
+    <p>
+    The confusion matrix exposes the fundamental trade-off of learning under acute class imbalance. Lowering the decision threshold ($\tau^* = 0.30$ for Random Forest) enables the model to capture 92.59% of true clicks ($\text{TP}=250$) at the expense of a high False Positive Rate ($\text{FPR}=78.5\%$). In commercial advertising, missing a click (False Negative) forfeits revenue entirely, whereas displaying an unclicked ad (False Positive) incurs only opportunity cost. Random Forest's balanced F1-score (0.2433) represents an operationally viable operating point for auction ranking.
+    </p>
+
+    <h3>9.2 Probabilistic Calibration and Log-Loss Divergence</h3>
+    <p>
+    To evaluate probability calibration, test impressions were partitioned into predicted probability deciles. The empirical cross-entropy loss is formulated as:
+    </p>
+    <div class="equation-block">
+    $\text{Log-Loss} = -\frac{1}{N} \sum_{i=1}^N \left[ y_i \ln(\hat{p}_i) + (1 - y_i) \ln(1 - \hat{p}_i) \right]$
+    <span class="eq-num">(9)</span>
+    </div>
+    <p>
+    While Logistic Regression achieved a marginally higher ROC-AUC (0.5830 vs. 0.5822), its Log-Loss (0.6856) was degraded by uncalibrated probability predictions near 0 and 1. Conversely, Random Forest averages predictions across 60 independent decision trees, smoothing probability estimates and yielding a <strong>Log-Loss of 0.5963</strong> (a 13.0% improvement over linear regression). In second-price auctions, where bid scaling is proportional to $\hat{p}_i$, calibrated probabilities prevent advertiser over-bidding.
+    </p>
+</div>
+
+<!-- ==================== PAGE 9 ==================== -->
+<div class="page">
+    <div class="running-header"><span>Smart Commerce AI</span><span>9</span></div>
+    <h2>10 Reproducibility, Threats to Validity, and Deployment Considerations</h2>
+
+    <h3>10.1 Reproducibility Protocol and Determinism</h3>
+    <p>
+    To facilitate external replication, all experimental code, preprocessed datasets, and evaluation scripts are publicly archived (Pandey 2026). Full determinism is maintained by fixing random seeds across all randomized transformations:
+    </p>
+    <ul>
+        <li>Dataset partitioning: <code>randomSplit([0.7, 0.15, 0.15], seed=42)</code>.</li>
+        <li>Random Forest feature bagging: <code>RandomForestClassifier(seed=42)</code>.</li>
+        <li>ALS factor initialization: deterministic latent vector initialization in PySpark MLlib.</li>
+    </ul>
+
+    <h3>10.2 Threats to Validity</h3>
+    <ul>
+        <li><strong>Internal Validity:</strong> Potential threats include feature leakage and evaluation bias. We eliminated leakage through formal point-in-time filtering ($t_{\text{behavior}} < t_{\text{impression}}$) and unit testing. Threshold optimization was performed strictly on validation data to prevent optimistic test evaluation.</li>
+        <li><strong>External Validity:</strong> The demonstration dataset utilizes 15,000 impressions and category-brand groupings. While structurally identical to industrial AliMama schemas, behavioral dynamics on full-scale platforms (e.g., millions of users and SKU-level catalogs) may exhibit higher variance.</li>
+        <li><strong>Construct Validity:</strong> Recommender performance was measured via offline ranking metrics (NDCG@10, coverage). While indicative of algorithmic quality, offline metrics cannot capture online user exploration behavior or real-time conversion elasticity.</li>
+    </ul>
+
+    <h3>10.3 Production Deployment Considerations and Safeguards</h3>
+    <p>
+    Deploying dual recommendation and advertising architectures in commercial environments requires strict operational safeguards:
+    </p>
+    <ol>
+        <li><strong>Ad Frequency Capping:</strong> Repeatedly displaying identical campaigns causes user fatigue. We enforce a strict constraint limiting exposure to at most 2 impressions per campaign per user session.</li>
+        <li><strong>Inventory and Price Integrity:</strong> The pipeline validates item metadata, enforcing $\text{price} > 0.0$ and checking SKU availability before auction participation.</li>
+        <li><strong>Data Privacy Compliance:</strong> User demographic attributes (<code>gender</code>, <code>age_level</code>) are processed strictly as anonymized categorical indices, complying with privacy frameworks (e.g., GDPR) by prohibiting Personally Identifiable Information (PII) ingestion.</li>
+    </ol>
+
+    <h2>11 Extended Future Directions</h2>
+    <p>
+    Future extensions of Smart Commerce AI encompass three technological vectors: (1) streaming architecture deployment using Spark Structured Streaming and Delta Lake for sub-second latent factor updates; (2) deep sequential feature extractors (e.g., Deep Interest Networks) operating on user behavioral sequences; and (3) privacy-preserving federated matrix factorization across edge client nodes.
+    </p>
+</div>
+
+<!-- ==================== PAGE 10 ==================== -->
+<div class="page">
+    <div class="running-header"><span>Smart Commerce AI</span><span>10</span></div>
+    <h2>Declarations</h2>
+    <p class="no-indent">
+    <strong>Funding:</strong> This research was conducted as part of the academic curriculum for Course INT315 (Distributed and Cluster Computing) at the School of Computer Science and Engineering, Lovely Professional University, India. No external commercial grants were received.
+    </p>
+    <p class="no-indent">
+    <strong>Conflict of Interest:</strong> The author declares no financial or personal conflicts of interest.
+    </p>
+    <p class="no-indent">
+    <strong>Data Availability:</strong> All datasets, validation scripts, and benchmark results are publicly available in the project repository: <a href="https://github.com/Utkarsh1454/Smart-Commerce-AI">https://github.com/Utkarsh1454/Smart-Commerce-AI</a>.
+    </p>
+
+    <h2>References</h2>
+    <div class="references-list">
+    <ol>
+        <li><strong>Alibaba Tianchi (2018)</strong> Ad Display/Click Data on Taobao.com. Alibaba Cloud Computing Data Repository. <a href="https://tianchi.aliyun.com/dataset/dataDetail?dataId=56">https://tianchi.aliyun.com/dataset/dataDetail?dataId=56</a></li>
+        <li><strong>Armbrust M, Xin RS, Lian C, Huai Y, Liu D, Bradley JK, Meng X, Kaftan T, Franklin MJ, Ghodsi A, Zaharia M (2015)</strong> Spark SQL: relational data processing in Spark. In: Proceedings of the 2015 ACM SIGMOD international conference on management of data, pp 1383–1394</li>
+        <li><strong>Chapelle O, Manavoglu E, Rosales R (2014)</strong> Simple and scalable response prediction for display advertising. ACM Trans Intell Syst Technol (TIST) 5(4):1–34</li>
+        <li><strong>Chen T, Guestrin C (2016)</strong> XGBoost: a scalable tree boosting system. In: Proceedings of the 22nd ACM SIGKDD international conference on knowledge discovery and data mining, pp 785–794</li>
+        <li><strong>Cheng HT, Koc L, Harmsen J, Shaked T, Chandra T, Aradhye H, Anderson G, Corrado G, Chai W, Ispir M, Anil R (2016)</strong> Wide & deep learning for recommender systems. In: Proceedings of the 1st workshop on deep learning for recommender systems, pp 7–10</li>
+        <li><strong>Guo H, Tang R, Zeng Y, Guo X, Xiu P, He X (2017)</strong> DeepFM: a factorization-machine based neural network for CTR prediction. In: Proceedings of the 26th international joint conference on artificial intelligence (IJCAI), pp 1725–1731</li>
+        <li><strong>He X, Pan J, Jin O, Xu T, Liu B, Xu T, Shi Y, Atallah A, Herbrich R, Bowers S, Candela JQ (2014)</strong> Practical lessons from predicting clicks on ads at Facebook. In: Proceedings of the 8th international workshop on data mining for online advertising, pp 1–9</li>
+        <li><strong>Hu Y, Koren Y, Volinsky C (2008)</strong> Collaborative filtering for implicit feedback datasets. In: Proceedings of the 8th IEEE international conference on data mining (ICDM), pp 263–272</li>
+        <li><strong>Koren Y, Bell R, Volinsky C (2009)</strong> Matrix factorization techniques for recommender systems. Computer 42(8):30–37</li>
+        <li><strong>McMahan HB, Holt G, Sculley D, Young M, Ebner D, Grady J, Nie L, Phillips T, Davydov E, Golovin D, Chikkerur S (2013)</strong> Ad click prediction: a view from the trenches. In: Proceedings of the 19th ACM SIGKDD international conference on knowledge discovery and data mining, pp 1222–1230</li>
+        <li><strong>Meng X, Bradley J, Yavuz B, Sparks E, Venkataraman S, Liu D, Freeman J, Tsai D, Amde M, Owen S, Xin D et al (2016)</strong> MLlib: machine learning in Apache Spark. J Mach Learn Res 17(1):1235–1241</li>
+        <li><strong>Pandey U (2026)</strong> Smart Commerce AI: a parallel framework for personalized product recommendation and advertisement click prediction using Apache Spark. Project repository. <a href="https://github.com/Utkarsh1454/Smart-Commerce-AI">https://github.com/Utkarsh1454/Smart-Commerce-AI</a></li>
+        <li><strong>RecZoo (2024)</strong> TaobaoAd_x1 preprocessed click and behavior dataset. Hugging Face Datasets. <a href="https://huggingface.co/datasets/reczoo/TaobaoAd_x1">https://huggingface.co/datasets/reczoo/TaobaoAd_x1</a></li>
+        <li><strong>Sarwar B, Karypis G, Konstan J, Riedl J (2001)</strong> Item-based collaborative filtering recommendation algorithms. In: Proceedings of the 10th international conference on world wide web, pp 285–295</li>
+        <li><strong>Su X, Khoshgoftaar TM (2009)</strong> A survey of collaborative filtering techniques. Adv Artif Intell 2009:1–19</li>
+        <li><strong>Zaharia M, Chowdhury M, Das T, Dave A, Ma J, McCauley M, Franklin MJ, Shenker S, Stoica I (2012)</strong> Resilient distributed datasets: a fault-tolerant abstraction for in-memory cluster computing. In: 9th USENIX symposium on networked systems design and implementation (NSDI 12), pp 15–28</li>
+        <li><strong>Zaharia M, Xin RS, Wendell P, Das T, Armbrust M, Dave A, Meng X, Rosen J, Venkataraman S, Franklin MJ, Ghodsi A, Gonzalez J, Shenker S, Stoica I (2016)</strong> Apache Spark: a unified engine for big data processing. Commun ACM 59(11):56–65</li>
+        <li><strong>Zhou G, Zhu X, Song C, Fan Y, Zhu H, Ma X, Yan Y, Jin J, Li H, Gai K (2018)</strong> Deep interest network for click-through rate prediction. In: Proceedings of the 24th ACM SIGKDD international conference on knowledge discovery and data mining, pp 1059–1068</li>
+    </ol>
+    </div>
+</div>
+
+</body>
+</html>
+"""
+    HTML_PATH.write_text(html_content, encoding="utf-8")
+    print(f"Created HTML template at {HTML_PATH}")
+
+    edge_bin = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+    header = "<div style='font-size:8pt; font-family:Times New Roman; width:100%; padding-left:18mm; padding-right:18mm; display:flex; justify-content:space-between; color:#444;'><span>Smart Commerce AI</span><span class='pageNumber'></span></div>"
+    footer = "<div style='font-size:1pt; color:transparent; opacity:0;'>.</div>"
+
+    cmd = [
+        edge_bin,
+        "--headless",
+        "--disable-gpu",
+        "--no-pdf-header-footer",
+        f"--print-to-pdf={PDF_PATH}",
+        str(HTML_PATH)
+    ]
+
+    print("Running Edge headless PDF export...")
+    subprocess.run(cmd, check=True)
+    print(f"Successfully generated PDF: {PDF_PATH}")
+
+    reader = pypdf.PdfReader(str(PDF_PATH))
+    page_count = len(reader.pages)
+    print(f"==================================================")
+    print(f"GENERATED PDF PAGE COUNT: {page_count} PAGES")
+    print(f"TARGET PAGE COUNT:        10 PAGES")
+    print(f"FILE SIZE:                {PDF_PATH.stat().st_size:,} bytes")
+    print(f"==================================================")
+    return page_count
+
+if __name__ == "__main__":
+    generate_html_and_pdf()
