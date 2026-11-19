@@ -39,10 +39,18 @@ env/
 env.bak/
 venv.bak/
 
+# Generated Processed Data & Machine Learning Models
+data/processed/
+Smart_Commerce_AI/data/processed/
+models/
+Smart_Commerce_AI/models/
+
 # Spark, Hadoop & Database logs
 metastore_db/
 derby.log
 spark-warehouse/
+.sparkStaging/
+logs/
 *.parquet.crc
 *.csv.crc
 *.json.crc
